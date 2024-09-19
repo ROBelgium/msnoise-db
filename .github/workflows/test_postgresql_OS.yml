@@ -52,7 +52,7 @@ jobs:
 
       - name: Initialize PostgreSQL data directory
         run: |
-          ./postgresql/bin/initdb -D $./postgresql_data
+          ./postgresql/bin/initdb -D ./postgresql_data
         shell: bash
 
       - name: Start PostgreSQL server
