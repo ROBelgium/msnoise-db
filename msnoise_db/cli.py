@@ -118,13 +118,14 @@ def start_server():
     data_dir = os.path.join(mariadb_dir, 'data')
     if system == "Windows":
         mysqld_cmd = os.path.join(bin_dir, 'mariadbd')
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file', CONFIG_FILE], stdout=subprocess.PIPE,
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
     else:
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
         process = subprocess.Popen([mysqld_cmd, '--defaults-file', CONFIG_FILE], stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
 
+    print(process.stdout.read())
     print(process.stderr.read())
     with open(PID_FILE, 'w') as f:
         f.write(str(process.pid))
