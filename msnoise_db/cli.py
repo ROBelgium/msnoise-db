@@ -71,14 +71,17 @@ def download_and_extract(extract_to):
         f.write("max_connections=100\n")  # Allow up to 100 connections
         f.write("max_allowed_packet=64M\n")  # Allow large queries up to 64MB
         f.write("bind-address=0.0.0.0\n")
+        system = platform.system()
         f.write(f"basedir='{mariadb_dir}'\n")
-        f.write(f"tmpdir='{tmpdir}'\n")
-        f.write(f"datadir='{datadir}'\n")
-        f.write(f"socket='{socket}'\n")
+        if system != 'Windows':
+            f.write(f"tmpdir='{tmpdir}'\n")
+            f.write(f"datadir='{datadir}'\n")
+            f.write(f"socket='{socket}'\n")
         f.write("\n\n")
         f.write("[mysql]\n")
         f.write(f"port=3307\n")
-        # f.write(f"socket='socket'\n")
+        if system != 'Windows':
+            f.write(f"socket='socket'\n")
 
 
 @cli.command()
