@@ -149,11 +149,7 @@ def create_database(database_name, port):
     """Create a new database in MariaDB."""
     mariadb_dir = get_mariadb_dir()
     system = platform.system()
-    if system == 'Windows':
-        bin_dir = os.path.join(mariadb_dir, 'bin')
-    else:
-        bin_dir = os.path.join(mariadb_dir, 'scripts')
-
+    bin_dir = os.path.join(mariadb_dir, 'bin')
     mysql_cmd = os.path.join(bin_dir, 'mysql')
 
     # Test connection
@@ -186,10 +182,7 @@ def drop_database(database_name, port):
     """Drop a database in MariaDB."""
     mariadb_dir = get_mariadb_dir()
     system = platform.system()
-    if system == 'Windows':
-        bin_dir = os.path.join(mariadb_dir, 'bin')
-    else:
-        bin_dir = os.path.join(mariadb_dir, 'scripts')
+    bin_dir = os.path.join(mariadb_dir, 'bin')
 
     mysql_cmd = os.path.join(bin_dir, 'mysql')
     if database_name in ["information_schema", "mysql", "performance_schema", "sys"]:
@@ -214,10 +207,7 @@ def show_databases(port):
     """Create a new database in MariaDB."""
     mariadb_dir = get_mariadb_dir()
     system = platform.system()
-    if system == 'Windows':
-        bin_dir = os.path.join(mariadb_dir, 'bin')
-    else:
-        bin_dir = os.path.join(mariadb_dir, 'scripts')
+    bin_dir = os.path.join(mariadb_dir, 'bin')
 
     mysql_cmd = os.path.join(bin_dir, 'mysql')
 
