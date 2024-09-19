@@ -13,22 +13,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download and unpack PostgreSQL Portable Edition
+      - name: Download PostgreSQL Portable for macOS
+        if: matrix.os == 'macos-latest'
+        run: wget https://get.enterprisedb.com/postgresql/postgresql-10.23-1-osx-binaries.zip -O postgresql.zip
+
+      - name: Download PostgreSQL Portable for Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: wget https://get.enterprisedb.com/postgresql/postgresql-10.23-1-linux-x64-binaries.tar.gz -O postgresql.tar.gz
+
+      - name: Download PostgreSQL Portable for Windows
+        if: matrix.os == 'windows-latest'
         run: |
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            wget https://get.enterprisedb.com/postgresql/postgresql-10.23-1-osx-binaries.zip -O postgresql.zip
-          elif [[ "$RUNNER_OS" == "Linux" ]]; then
-            wget https://get.enterprisedb.com/postgresql/postgresql-10.23-1-linux-x64-binaries.tar.gz -O postgresql.tar.gz
-            tar -xzf postgresql.tar.gz -C $GITHUB_WORKSPACE
-            mv $GITHUB_WORKSPACE/pgsql $GITHUB_WORKSPACE/postgresql
-          elif [[ "$RUNNER_OS" == "Windows" ]]; then
-            Invoke-WebRequest -Uri https://get.enterprisedb.com/postgresql/postgresql-10.23-1-windows-x64-binaries.zip -OutFile postgresql.zip
-          fi
-          
-          if [[ "$RUNNER_OS" == "macOS" || "$RUNNER_OS" == "Windows" ]]; then
-            unzip postgresql.zip -d $GITHUB_WORKSPACE
-            mv $GITHUB_WORKSPACE/pgsql $GITHUB_WORKSPACE/postgresql
-          fi
+          Invoke-WebRequest -Uri https://get.enterprisedb.com/postgresql/postgresql-10.23-1-windows-x64-binaries.zip -OutFile postgresql.zip
+        shell: pwsh
+
+      - name: Unpack PostgreSQL archive on macOS or Windows
+        if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+        run: |
+          unzip postgresql.zip -d $GITHUB_WORKSPACE
+          mv $GITHUB_WORKSPACE/pgsql $GITHUB_WORKSPACE/postgresql
+
+      - name: Unpack PostgreSQL archive on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tar -xzf postgresql.tar.gz -C $GITHUB_WORKSPACE
+          mv $GITHUB_WORKSPACE/pgsql $GITHUB_WORKSPACE/postgresql
+    
 
       - name: Setup PostgreSQL environment variables
         run: |
