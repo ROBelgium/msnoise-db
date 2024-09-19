@@ -82,6 +82,15 @@ def install_db(port):
         f.write("skip-grant-tables\n")
         f.write("max_connections=100\n")       # Allow up to 100 connections
         f.write("max_allowed_packet=64M\n")    # Allow large queries up to 64MB
+        f.write("bind-address=0.0.0.0\n")
+        f.write(f"basedir={mariadb_dir}\n")
+        f.write(f"tmpdir={mariadb_dir}/tmp\n")
+        f.write(f"datadir={mariadb_dir}/data\n")
+        f.write(f"socket={mariadb_dir}/socket.sock\n")
+        f.write("\n\n")
+        f.write("[mysql]\n")
+        f.write(f"port={port}\n")
+        f.write("socket={mariadb_dir}/socket.sock\n")
 
     click.echo(f"Installation complete. MariaDB will use port {port}.")
 
