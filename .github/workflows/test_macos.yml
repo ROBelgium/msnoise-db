@@ -31,10 +31,10 @@ jobs:
 
       - name: Initialize PostgreSQL data directory
         run: |
-          $POSTGRESQL_HOME/bin/initdb -D $GITHUB_WORKSPACE/postgresql_data
+          $GITHUB_WORKSPACE/postgresql/bin/initdb -D $GITHUB_WORKSPACE/postgresql_data
 
       - name: Start PostgreSQL server
-        run: pg_ctl -D $GITHUB_WORKSPACE/postgresql_data -l logfile start
+        run: $GITHUB_WORKSPACE/postgresql/bin/pg_ctl -D $GITHUB_WORKSPACE/postgresql_data -l logfile start
 
       - name: Wait for PostgreSQL to start
         run: |
