@@ -3,7 +3,7 @@
 This is a Python-based command-line interface (CLI) tool for managing a portable MariaDB server for MSNoise.
 The tool allows you to download, extract, install, start, stop, create, and drop databases using MariaDB.
 
-CI Builds: [![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_full.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions)
+[![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_linux.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions) - [![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_windows.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions) - [![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_macos.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions)
 
 ## Features
 
