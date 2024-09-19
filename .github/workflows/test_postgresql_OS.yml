@@ -30,37 +30,37 @@ jobs:
       - name: Unpack PostgreSQL archive on macOS or Windows
         if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
         run: |
-          unzip postgresql.zip -d $GITHUB_WORKSPACE
-          mv $GITHUB_WORKSPACE/pgsql $GITHUB_WORKSPACE/postgresql
+          unzip postgresql.zip -d .
+          mv ./pgsql ./postgresql
 
       - name: Unpack PostgreSQL archive on Ubuntu
         if: matrix.os == 'ubuntu-latest'
         run: |
-          tar -xzf postgresql.tar.gz -C $GITHUB_WORKSPACE
-          mv $GITHUB_WORKSPACE/pgsql $GITHUB_WORKSPACE/postgresql
+          tar -xzf postgresql.tar.gz -C .
+          mv ./pgsql ./postgresql
     
 
       - name: Setup PostgreSQL environment variables
         run: |
-          echo 'POSTGRESQL_HOME=$GITHUB_WORKSPACE/postgresql' >> $GITHUB_ENV
+          echo 'POSTGRESQL_HOME=./postgresql' >> $GITHUB_ENV
           echo 'PATH=$POSTGRESQL_HOME/bin:$PATH' >> $GITHUB_ENV
           source $GITHUB_ENV
         shell: bash
 
       - name: Initialize PostgreSQL data directory
         run: |
-          $GITHUB_WORKSPACE/postgresql/bin/initdb -D $GITHUB_WORKSPACE/postgresql_data
+          ./postgresql/bin/initdb -D ./postgresql_data
         shell: bash
 
       - name: Start PostgreSQL server
         run: |
-          $GITHUB_WORKSPACE/postgresql/bin/pg_ctl -D $GITHUB_WORKSPACE/postgresql_data -l logfile start
+          ./postgresql/bin/pg_ctl -D ./postgresql_data -l logfile start
         shell: bash
 
       - name: Wait for PostgreSQL to start
         run: |
           for i in {30..0}; do
-            if $GITHUB_WORKSPACE/postgresql/bin/pg_isready &>/dev/null; then
+            if ./postgresql/bin/pg_isready &>/dev/null; then
               break
             fi
             echo 'Waiting for PostgreSQL to start...'
@@ -70,12 +70,12 @@ jobs:
 
       - name: Set up PostgreSQL user and database
         run: |
-          $GITHUB_WORKSPACE/postgresql/bin/createdb "runner"
-          $GITHUB_WORKSPACE/postgresql/bin/psql -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
-          $GITHUB_WORKSPACE/postgresql/bin/psql -c "ALTER USER msnoise WITH SUPERUSER;"
+          ./postgresql/bin/createdb "runner"
+          ./postgresql/bin/psql -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
+          ./postgresql/bin/psql -c "ALTER USER msnoise WITH SUPERUSER;"
         shell: bash
 
       - name: Verify PostgreSQL setup
         run: |
-          $GITHUB_WORKSPACE/postgresql/bin/psql -c "\l"
+          ./postgresql/bin/psql -c "\l"
         shell: bash
