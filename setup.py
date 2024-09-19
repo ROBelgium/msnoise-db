@@ -22,7 +22,8 @@ setup(version=get_git_version(),
       install_requires=[
           'click',
           'pymysql',
-          'pooch'
+          'pooch',
+          'psutil'
       ],
       extras_require={ },
       entry_points='''
