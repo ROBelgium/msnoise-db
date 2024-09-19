@@ -39,7 +39,7 @@ jobs:
       - name: Wait for PostgreSQL to start
         run: |
           for i in {30..0}; do
-            if pg_isready &>/dev/null; then
+            if $GITHUB_WORKSPACE/postgresql/bin/pg_isready &>/dev/null; then
               break
             fi
             echo 'Waiting for PostgreSQL to start...'
@@ -48,9 +48,9 @@ jobs:
 
       - name: Set up PostgreSQL user and database
         run: |
-          psql -c "CREATE USER github WITH PASSWORD 'password';"
-          psql -c "ALTER USER github WITH SUPERUSER;"
-          psql -c "CREATE DATABASE test_db OWNER github;"
+          $GITHUB_WORKSPACE/postgresql/bin/psql -c "CREATE USER github WITH PASSWORD 'password';"
+          $GITHUB_WORKSPACE/postgresql/bin/psql -c "ALTER USER github WITH SUPERUSER;"
+          $GITHUB_WORKSPACE/postgresql/bin/psql -c "CREATE DATABASE test_db OWNER github;"
 
       - name: Verify PostgreSQL setup
-        run: psql -c "\l"
+        run: $GITHUB_WORKSPACE/postgresql/bin/psql -c "\l"
