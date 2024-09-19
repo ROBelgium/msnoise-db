@@ -119,8 +119,6 @@ def start_server():
     click.echo(f"MariaDB server started with PID: {process.pid} with this config file: {CONFIG_FILE}")
 
 
-
-
 @cli.command()
 def stop_server():
     """Stop the MariaDB server."""
