@@ -5,7 +5,7 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 
 ## Features
 
-- Download and extract MariaDB portable version from a URL.
+- Download and extract MariaDB portable version.
 - Install/Setup MariaDB.
 - Start MariaDB server in the background.
 - Stop MariaDB server.
@@ -20,6 +20,7 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 - `requests` package: Install using `pip install requests`.
 - `psutil` package: Install using `pip install psutil`.
 - `configobj` package: Install using `pip install configobj`.
+- `pooch` package: Install using `pip install pooch`.
 
 ## Installation
 
