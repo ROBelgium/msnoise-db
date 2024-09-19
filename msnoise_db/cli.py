@@ -80,7 +80,6 @@ def download_and_extract(extract_to):
             f.write(f"tmpdir='{tmpdir}'\n")
             f.write(f"datadir='{datadir}'\n")
             f.write(f"socket='{socket}'\n")
-            f.write(f"log='{logdir}/log.log'\n")
             f.write(f"log_error='{logdir}/err.log'\n")
         f.write("\n\n")
         f.write("[mysql]\n")
