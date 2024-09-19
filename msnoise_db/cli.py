@@ -85,7 +85,7 @@ def download_and_extract(extract_to):
         f.write("[mysql]\n")
         f.write(f"port=3307\n")
         if system != 'Windows':
-            f.write(f"socket='socket'\n")
+            f.write(f"socket='{socket}'\n")
 
 
 @cli.command()
@@ -122,14 +122,15 @@ def start_server():
                                    stderr=subprocess.PIPE)
     else:
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file', CONFIG_FILE], stdout=subprocess.PIPE,
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
+    if process.returncode:
+        print(process.stdout.read())
+        print(process.stderr.read())
+        sys.exit(0)
 
-    print(process.stdout.read())
-    print(process.stderr.read())
     with open(PID_FILE, 'w') as f:
         f.write(str(process.pid))
-
     click.echo(f"MariaDB server started with PID: {process.pid} with this config file: {CONFIG_FILE}")
 
 
