@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Author: Douglas Creager <dcreager@dcreager.net>
-# adapted for msnoise from obspy
 # This file is placed into the public domain.
 
 # Calculates the current version number.  If possible, this is the
@@ -32,7 +31,7 @@
 #
 #   include RELEASE-VERSION
 
-# NO IMPORTS FROM msnoise OR FUTURE IN THIS FILE! (file gets used at
+# NO IMPORTS FROM OBSPY OR FUTURE IN THIS FILE! (file gets used at
 # installation time)
 import inspect
 import io
@@ -46,27 +45,30 @@ __all__ = ["get_git_version"]
 
 script_dir = os.path.abspath(os.path.dirname(inspect.getfile(
                                              inspect.currentframe())))
-MSNOISE_ROOT = os.path.abspath(os.path.join(script_dir, os.pardir))
-VERSION_FILE = os.path.join(MSNOISE_ROOT, "msnoise_db", "RELEASE-VERSION")
+OBSPY_ROOT = os.path.abspath(os.path.join(script_dir, os.pardir,
+                                          os.pardir, os.pardir))
+VERSION_FILE = os.path.join(OBSPY_ROOT, "msnoise-db", "RELEASE-VERSION")
+
 
 def call_git_describe(abbrev=10, dirty=True,
                       append_remote_tracking_branch=True):
     try:
         p = check_output(['git', 'rev-parse', '--show-toplevel'],
-                         cwd=MSNOISE_ROOT, stderr=STDOUT)
+                         cwd=OBSPY_ROOT, stderr=STDOUT)
         path = p.decode().strip()
     except (OSError, CalledProcessError):
         return None
 
-    if os.path.normpath(path) != MSNOISE_ROOT:
+    if os.path.normpath(path) != OBSPY_ROOT:
         return None
 
     command = ['git', 'describe', '--abbrev=%d' % abbrev, '--always', '--tags']
     if dirty:
         command.append("--dirty")
     try:
-        p = check_output(command,
-                         cwd=MSNOISE_ROOT, stderr=STDOUT)
+        p = check_output(['git', 'describe', '--dirty', '--abbrev=%d' % abbrev,
+                          '--always', '--tags'],
+                         cwd=OBSPY_ROOT, stderr=STDOUT)
         line = p.decode().strip()
     except (OSError, CalledProcessError):
         return None
@@ -76,7 +78,7 @@ def call_git_describe(abbrev=10, dirty=True,
         try:
             # find out local alias of remote and name of remote tracking branch
             p = check_output(['git', 'branch', '-vv'],
-                             cwd=MSNOISE_ROOT, stderr=STDOUT)
+                             cwd=OBSPY_ROOT, stderr=STDOUT)
             remote_info = [line_.rstrip()
                            for line_ in p.decode().splitlines()]
             remote_info = [line_ for line_ in remote_info
@@ -85,7 +87,7 @@ def call_git_describe(abbrev=10, dirty=True,
             remote, branch = remote_info.split("/")
             # find out real name of remote
             p = check_output(['git', 'remote', '-v'],
-                             cwd=MSNOISE_ROOT, stderr=STDOUT)
+                             cwd=OBSPY_ROOT, stderr=STDOUT)
             stdout = [line_.strip() for line_ in p.decode().splitlines()]
             remote = [line_ for line_ in stdout
                       if line_.startswith(remote)][0].split()[1]
@@ -104,6 +106,7 @@ def call_git_describe(abbrev=10, dirty=True,
             pass
 
     # (this line prevents official releases)
+    # should work again now, see #482 and obspy/obspy@b437f31
     if "-" not in line and "." not in line:
         version = "0.0.0.dev+0.g%s" % line
     else:
@@ -148,23 +151,14 @@ def get_git_version(abbrev=10, dirty=True, append_remote_tracking_branch=True):
     if version is None:
         version = release_version
 
-    if version is None:
-        try:
-            from importlib.metadata import version as V
-            version = V('msnoise_db')
-        except:
-            pass
-
     # If we still don't have anything, that's an error.
     if version is None:
-        warnings.warn("msnoise_db could not determine its version number. Make "
+        warnings.warn("ObsPy could not determine its version number. Make "
                       "sure it is properly installed. This for example "
                       "happens when installing from a zip archive "
-                      "of the msnoise repository which is not a supported way "
-                      "of installing msnoise_db.")
-        import datetime
-        day = datetime.datetime.now().strftime("%Y%m%d%H%M")
-        return '0.0.0+' + day
+                      "of the ObsPy repository which is not a supported way "
+                      "of installing ObsPy.")
+        return '0.0.0+archive'
 
     # pip uses its normalized version number (strict PEP440) instead of our
     # original version number, so we bow to pip and use the normalized version
