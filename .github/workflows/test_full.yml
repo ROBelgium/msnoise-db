@@ -66,9 +66,9 @@ jobs:
       - name: Test suite
         shell: bash -l {0}
         run: |
-          msnoisedb download_and_extract ./
-          msnoisedb install_db mariadb-11*/
-          msnoisedb start_server
-          msnoisedb create_database bubu
-          msnoisedb show_databases
-          msnoisedb stop_server
+          msnoisedb download-and-extract ./
+          msnoisedb install-db mariadb-11*/
+          msnoisedb start-server
+          msnoisedb create-database bubu
+          msnoisedb show-databases
+          msnoisedb stop-server

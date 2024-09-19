@@ -6,4 +6,5 @@ dependencies:
   - click
   - pymysql
   - pooch
+  - psutil
 
