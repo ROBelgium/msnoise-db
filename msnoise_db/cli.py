@@ -166,13 +166,13 @@ def create_database(database_name, port):
 
     # Test connection
     click.echo("Testing connection...")
-    subprocess.run([mysql_cmd, '-u', 'root', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
+    subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
 
     # Create database
     create_db_command = f'CREATE DATABASE {database_name};'
 
     click.echo(f"Creating database '{database_name}'...")
-    result = subprocess.run([mysql_cmd, '-u', 'root', f'--port={port}', '--ssl=FALSE', '-e', create_db_command],
+    result = subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', create_db_command],
                             capture_output=True, text=True)
     if result.returncode == 0:
         click.echo(f"Database '{database_name}' has been created.")
@@ -182,7 +182,7 @@ def create_database(database_name, port):
 
     # List databases
     click.echo("Listing databases...")
-    subprocess.run([mysql_cmd, '-u', 'root', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
+    subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
 
     click.echo("Database setup completed.")
 
@@ -205,7 +205,7 @@ def drop_database(database_name, port):
     drop_db_command = f'DROP DATABASE {database_name};'
 
     click.echo(f"Dropping database '{database_name}'...")
-    result = subprocess.run([mysql_cmd, '-u', 'root', f'--port={port}', '--ssl=FALSE', '-e', drop_db_command],
+    result = subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', drop_db_command],
                             capture_output=True, text=True)
     if result.returncode == 0:
         click.echo(f"Database '{database_name}' has been dropped.")
@@ -225,7 +225,7 @@ def show_databases(port):
 
     # List databases
     click.echo("Listing databases...")
-    subprocess.run([mysql_cmd, '-u', 'root', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
+    subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
 
 def run():
     cli(obj={})
