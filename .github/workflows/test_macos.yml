@@ -27,7 +27,7 @@ jobs:
 
       - name: Initialize PostgreSQL data directory
         run: |
-          initdb -D $GITHUB_WORKSPACE/postgresql_data
+          $POSTGRESQL_HOME/bin/initdb -D $GITHUB_WORKSPACE/postgresql_data
 
       - name: Start PostgreSQL server
         run: pg_ctl -D $GITHUB_WORKSPACE/postgresql_data -l logfile start
