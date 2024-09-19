@@ -122,7 +122,7 @@ def start_server():
                                    stderr=subprocess.PIPE)
     else:
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE, '--data-dir=' + data_dir, "--skip-grant-tables"], stdout=subprocess.PIPE,
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE], stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
 
     print(process.stderr.read())
@@ -138,21 +138,35 @@ def stop_server():
     if not os.path.exists(PID_FILE):
         click.echo("MariaDB server PID file not found.")
         return
+    mariadb_dir = get_mariadb_dir()
+    system = platform.system()
+    bin_dir = os.path.join(mariadb_dir, 'bin')
 
-    with open(PID_FILE, 'r') as f:
-        pid = int(f.read())
+    if system == 'Windows':
+        with open(PID_FILE, 'r') as f:
+            pid = int(f.read())
 
-    try:
-        p = psutil.Process(pid)
-        p.terminate()
-        p.wait(timeout=5)
-        click.echo("MariaDB server stopped.")
-    except (psutil.NoSuchProcess, psutil.TimeoutExpired) as e:
-        click.echo(f"Error stopping MariaDB server: {str(e)}")
-    finally:
-        if os.path.exists(PID_FILE):
-            os.remove(PID_FILE)
-
+        try:
+            p = psutil.Process(pid)
+            p.terminate()
+            p.wait(timeout=5)
+            click.echo("MariaDB server stopped.")
+        except (psutil.NoSuchProcess, psutil.TimeoutExpired) as e:
+            click.echo(f"Error stopping MariaDB server: {str(e)}")
+        finally:
+            if os.path.exists(PID_FILE):
+                os.remove(PID_FILE)
+    else:
+        try:
+            mysqld_cmd = os.path.join(bin_dir, "mariadb-admin")
+            process = subprocess.Popen([mysqld_cmd, "--port 3307", "-u", "root", "shutdown"], stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+            print(process.stderr.read())
+        except:
+            click.echo("Sorry")
+        finally:
+            if os.path.exists(PID_FILE):
+                os.remove(PID_FILE)
 
 @cli.command()
 @click.argument('database_name')
