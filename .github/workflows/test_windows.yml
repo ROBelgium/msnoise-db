@@ -1,0 +1,71 @@
+name: Windows Tests
+
+on: [push,pull_request]
+
+jobs:
+  run_tests:
+    runs-on: ${{ matrix.os }}
+    if: |
+      !contains(github.event.head_commit.message, '+ONLYDOCS') &&
+      !contains(github.event.head_commit.message, '+NOFULLTEST')
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+        os: [windows-latest]
+        include:
+          - os: windows-latest
+            label: win-64
+            prefix: C:\Miniconda3\envs\test
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - name: Install dependencies on Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update && sudo apt-get install -y libncurses5-dev libncursesw5-dev libncursesw5 libncurses5
+
+      - uses: conda-incubator/setup-miniconda@v3.0.4
+        with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          activate-environment: test${{ matrix.python-version }}
+          use-mamba: true
+          python-version: ${{ matrix.python-version }}
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ matrix.prefix }}${{ matrix.python-version }}
+          key: ${{ matrix.label }}-conda-py${{ matrix.python-version }}-${{ hashFiles('.github/environment.yml') }}-${{ steps.date.outputs.date }}-${{ env.CACHE_NUMBER }}
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 1
+        id: cache
+
+      - name: Update environment
+        run: mamba env update -n test${{ matrix.python-version }} -f .github/environment.yml
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: print package info
+        shell: bash -l {0}
+        run: |
+          conda info -a
+          conda list
+
+      - name: Install MSNoise-DB
+        shell: bash -l {0}
+        run: |
+          pip install .
+
+      - name: Test suite
+        shell: bash -l {0}
+        run: |
+          msnoisedb download-and-extract ./
+          ls
+          msnoisedb install-db
+          msnoisedb start-server&
+          msnoisedb create-database bubu
+          msnoisedb show-databases
+          msnoisedb stop-server
