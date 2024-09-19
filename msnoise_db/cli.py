@@ -108,7 +108,7 @@ def start_server():
 
     bin_dir = os.path.join(mariadb_dir, 'bin')
 
-    mysqld_cmd = os.path.join(bin_dir, 'mysqld')
+    mysqld_cmd = os.path.join(bin_dir, 'mariadbd')
     click.echo("Starting MariaDB server in the background...")
     process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE], stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
@@ -149,7 +149,7 @@ def create_database(database_name, port):
     mariadb_dir = get_mariadb_dir()
     system = platform.system()
     bin_dir = os.path.join(mariadb_dir, 'bin')
-    mysql_cmd = os.path.join(bin_dir, 'mysql')
+    mysql_cmd = os.path.join(bin_dir, 'mariadb')
 
     # Test connection
     click.echo("Testing connection...")
@@ -183,7 +183,7 @@ def drop_database(database_name, port):
     system = platform.system()
     bin_dir = os.path.join(mariadb_dir, 'bin')
 
-    mysql_cmd = os.path.join(bin_dir, 'mysql')
+    mysql_cmd = os.path.join(bin_dir, 'mariadb')
     if database_name in ["information_schema", "mysql", "performance_schema", "sys"]:
         click.echo("You can't drop that database!")
         sys.exit(1)
@@ -208,7 +208,7 @@ def show_databases(port):
     system = platform.system()
     bin_dir = os.path.join(mariadb_dir, 'bin')
 
-    mysql_cmd = os.path.join(bin_dir, 'mysql')
+    mysql_cmd = os.path.join(bin_dir, 'mariadb')
 
     # List databases
     click.echo("Listing databases...")
