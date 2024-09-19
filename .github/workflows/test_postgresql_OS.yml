@@ -71,17 +71,17 @@ jobs:
       - name: Set up PostgreSQL user and database on MacOS
         if: matrix.os == 'macos-latest'
         run: |
-          ./postgresql/bin/createdb "runner"
-          ./postgresql/bin/psql -u runner -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
-          ./postgresql/bin/psql -u runner -c "ALTER USER msnoise WITH SUPERUSER;"
+          ./postgresql/bin/createdb -U runner "runner"
+          ./postgresql/bin/psql -U runner -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
+          ./postgresql/bin/psql -U runner -c "ALTER USER msnoise WITH SUPERUSER;"
         shell: bash
 
       - name: Set up PostgreSQL user and database on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          ./postgresql/bin/psql -u runner   -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
-          ./postgresql/bin/psql -u runner  -c "ALTER USER msnoise WITH SUPERUSER;"
-          ./postgresql/bin/createdb -u runner "runner"
+          ./postgresql/bin/psql -U runner -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
+          ./postgresql/bin/psql -U runner -c "ALTER USER msnoise WITH SUPERUSER;"
+          ./postgresql/bin/createdb -U runner "runner"
         shell: bash
 
 
