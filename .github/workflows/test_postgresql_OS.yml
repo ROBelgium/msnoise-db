@@ -90,7 +90,7 @@ jobs:
       - name: Verify PostgreSQL setup on MacOS
         if: matrix.os == 'macos-latest'
         run: |
-          ./postgresql/bin/psql -u runner -c "\l"
+          ./postgresql/bin/psql -U runner -c "\l"
         shell: bash
 
       - name: Verify PostgreSQL setup on Windows
