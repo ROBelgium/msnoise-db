@@ -48,9 +48,9 @@ jobs:
 
       - name: Set up PostgreSQL user and database
         run: |
+          $GITHUB_WORKSPACE/postgresql/bin/createdb "runner"
           $GITHUB_WORKSPACE/postgresql/bin/psql -c "CREATE USER runner WITH PASSWORD 'password';"
           $GITHUB_WORKSPACE/postgresql/bin/psql -c "ALTER USER runner WITH SUPERUSER;"
-          $GITHUB_WORKSPACE/postgresql/bin/createdb "test_db"
 
       - name: Verify PostgreSQL setup
         run: $GITHUB_WORKSPACE/postgresql/bin/psql -c "\l"
