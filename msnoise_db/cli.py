@@ -80,6 +80,8 @@ def download_and_extract(extract_to):
             f.write(f"tmpdir='{tmpdir}'\n")
             f.write(f"datadir='{datadir}'\n")
             f.write(f"socket='{socket}'\n")
+            f.write(f"log='{logdir}/log.log'\n")
+            f.write(f"log='{logdir}/err.log'\n")
         f.write("\n\n")
         f.write("[mysql]\n")
         f.write(f"port=3307\n")
@@ -121,7 +123,7 @@ def start_server():
                                    stderr=subprocess.PIPE)
     else:
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
-        process = subprocess.Popen([mysqld_cmd, '--data-dir=' + data_dir], stdout=subprocess.PIPE,
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE, '--data-dir=' + data_dir, "--skip-grant-tables"], stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
 
     print(process.stderr.read())
