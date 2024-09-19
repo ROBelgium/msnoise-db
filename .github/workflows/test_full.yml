@@ -68,8 +68,6 @@ jobs:
         run: |
           msnoisedb download-and-extract ./
           ls
-          set MARIADB_DIR=mariadb-11.5.2-*
-          export MARIADB_DIR=mariadb-11.5.2-*
           msnoisedb install-db
           msnoisedb start-server
           msnoisedb create-database bubu

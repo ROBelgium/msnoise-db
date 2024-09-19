@@ -3,10 +3,12 @@ import sys
 import subprocess
 import click
 import platform
+import glob
 import psutil
 import pooch
 
 PID_FILE = 'mariadb_server.pid'
+MARIADB_PATH = ".mariadb_path"
 CONFIG_FILE = 'my_custom.cnf'  # Configuration file for non-default port
 MARIADB_DIR_ENV_VAR = 'MARIADB_DIR'  # Name of the environment variable
 
@@ -14,7 +16,11 @@ MARIADB_DIR_ENV_VAR = 'MARIADB_DIR'  # Name of the environment variable
 def get_mariadb_dir():
     mariadb_dir = os.getenv(MARIADB_DIR_ENV_VAR)
     if not mariadb_dir:
-        raise click.UsageError(f"Environment variable {MARIADB_DIR_ENV_VAR} is not set.")
+        try:
+            mariadb_dir = open(MARIADB_PATH, 'r').read()
+        except:
+            raise click.UsageError(f"Environment variable {MARIADB_DIR_ENV_VAR} is not set."
+                                   f"And no .mariadb_path was found.")
     return mariadb_dir
 
 
@@ -47,7 +53,10 @@ def download_and_extract(extract_to):
         subprocess.run(["tar", "-xzf", zip_file, "-C", extract_to])
     else:
         raise click.BadParameter("Unsupported file format. Only .zip and .tar.gz are supported.")
-    click.echo(f"Extracted to: {extract_to}")
+    mariadb_dir = glob.glob(os.path.join(extract_to, "mariadb-11.5.2-*"))
+    click.echo(f"Extracted to: {mariadb_dir}")
+    with open(MARIADB_PATH, 'w') as f:
+        f.write(mariadb_dir)
 
 
 @cli.command()
