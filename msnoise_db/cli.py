@@ -72,8 +72,9 @@ def download_and_extract(extract_to):
         f.write("max_allowed_packet=64M\n")  # Allow large queries up to 64MB
         f.write("bind-address=0.0.0.0\n")
         system = platform.system()
-        f.write(f"basedir='{mariadb_dir}'\n")
+
         if system != 'Windows':
+            f.write(f"basedir='{mariadb_dir}'\n")
             f.write(f"tmpdir='{tmpdir}'\n")
             f.write(f"datadir='{datadir}'\n")
             f.write(f"socket='{socket}'\n")
@@ -107,15 +108,20 @@ def install_db():
 @cli.command()
 def start_server():
     """Start the MariaDB server in the background."""
+    click.echo("Starting MariaDB server in the background...")
     mariadb_dir = get_mariadb_dir()
     system = platform.system()
-
     bin_dir = os.path.join(mariadb_dir, 'bin')
+    data_dir = os.path.join(mariadb_dir, 'data')
+    if system == "Windows":
+        mysqld_cmd = os.path.join(bin_dir, 'mariadbd')
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE], stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+    else:
+        mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
+        process = subprocess.Popen([mysqld_cmd, '--data-dir=' + data_dir], stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
-    mysqld_cmd = os.path.join(bin_dir, 'mariadbd')
-    click.echo("Starting MariaDB server in the background...")
-    process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE], stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
     print(process.stderr.read())
     with open(PID_FILE, 'w') as f:
         f.write(str(process.pid))
