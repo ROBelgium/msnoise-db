@@ -24,7 +24,7 @@ jobs:
           - os: windows-latest
             label: win-64
             prefix: C:\Miniconda3\envs\test
-
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - name: Get current date
