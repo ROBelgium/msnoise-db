@@ -61,7 +61,7 @@ jobs:
       - name: Install MSNoise-DB
         shell: bash -l {0}
         run: |
-          pip install -e .
+          pip install .
 
       - name: Test suite
         shell: bash -l {0}
