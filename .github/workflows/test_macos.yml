@@ -22,6 +22,9 @@ jobs:
           echo 'export PATH=$POSTGRESQL_HOME/bin:$PATH' >> $GITHUB_ENV
           source $GITHUB_ENV
 
+      - name: Source environment variables
+        run: source $GITHUB_ENV
+
       - name: Initialize PostgreSQL data directory
         run: |
           initdb -D $GITHUB_WORKSPACE/postgresql_data
