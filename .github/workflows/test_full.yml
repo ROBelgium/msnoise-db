@@ -67,7 +67,9 @@ jobs:
         shell: bash -l {0}
         run: |
           msnoisedb download-and-extract ./
-          msnoisedb install-db mariadb-11*/
+          ls
+          
+          msnoisedb install-db
           msnoisedb start-server
           msnoisedb create-database bubu
           msnoisedb show-databases
