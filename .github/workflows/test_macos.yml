@@ -23,7 +23,11 @@ jobs:
           source $GITHUB_ENV
 
       - name: Source environment variables
-        run: source $GITHUB_ENV
+        run: |
+          ls
+          echo $GITHUB_WORKSPACE
+          ls $GITHUB_WORKSPACE
+          source $GITHUB_ENV
 
       - name: Initialize PostgreSQL data directory
         run: |
