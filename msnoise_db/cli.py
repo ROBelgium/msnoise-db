@@ -58,12 +58,29 @@ def download_and_extract(extract_to):
     with open(MARIADB_PATH, 'w') as f:
         f.write(mariadb_dir)
 
+    # Create a custom config file for the specified port
+    with open(CONFIG_FILE, 'w') as f:
+        f.write("[mysqld]\n")
+        f.write(f"port=3307\n")
+        f.write("skip-grant-tables\n")
+        f.write("max_connections=100\n")  # Allow up to 100 connections
+        f.write("max_allowed_packet=64M\n")  # Allow large queries up to 64MB
+        f.write("bind-address=0.0.0.0\n")
+        f.write(f"basedir={mariadb_dir}\n")
+        f.write(f"tmpdir={mariadb_dir}/tmp\n")
+        f.write(f"datadir={mariadb_dir}/data\n")
+        f.write(f"socket={mariadb_dir}/socket.sock\n")
+        f.write("\n\n")
+        f.write("[mysql]\n")
+        f.write(f"port=3307\n")
+        f.write("socket={mariadb_dir}/socket.sock\n")
+
 
 @cli.command()
-@click.option('--port', default=os.environ.get("MARIADB_PORT", 3307), help="Specify the port to use for MariaDB server.")
-def install_db(port):
+def install_db():
     """Install the MariaDB database."""
     mariadb_dir = get_mariadb_dir()
+
     system = platform.system()
     if system == 'Windows':
         bin_dir = os.path.join(mariadb_dir, 'bin')
@@ -73,26 +90,10 @@ def install_db(port):
         install_cmd = os.path.join(script_dir, 'mariadb-install-db')
 
     click.echo("Installing MariaDB database...")
-    subprocess.run([install_cmd])
+    data_dir = os.path.realpath(os.path.join(mariadb_dir, 'data'))
+    subprocess.run([install_cmd, "-d", data_dir])
 
-    # Create a custom config file for the specified port
-    with open(CONFIG_FILE, 'w') as f:
-        f.write("[mysqld]\n")
-        f.write(f"port={port}\n")
-        f.write("skip-grant-tables\n")
-        f.write("max_connections=100\n")       # Allow up to 100 connections
-        f.write("max_allowed_packet=64M\n")    # Allow large queries up to 64MB
-        f.write("bind-address=0.0.0.0\n")
-        f.write(f"basedir={mariadb_dir}\n")
-        f.write(f"tmpdir={mariadb_dir}/tmp\n")
-        f.write(f"datadir={mariadb_dir}/data\n")
-        f.write(f"socket={mariadb_dir}/socket.sock\n")
-        f.write("\n\n")
-        f.write("[mysql]\n")
-        f.write(f"port={port}\n")
-        f.write("socket={mariadb_dir}/socket.sock\n")
-
-    click.echo(f"Installation complete. MariaDB will use port {port}.")
+    click.echo(f"Installation complete.")
 
 
 @cli.command()
@@ -107,13 +108,18 @@ def start_server():
 
     mysqld_cmd = os.path.join(bin_dir, 'mysqld')
     click.echo("Starting MariaDB server in the background...")
-    process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE], stdout=subprocess.PIPE,
+    result = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE], stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
+    if result.returncode == 0:
+        with open(PID_FILE, 'w') as f:
+            f.write(str(result.pid))
 
-    with open(PID_FILE, 'w') as f:
-        f.write(str(process.pid))
+        click.echo(f"MariaDB server started with PID: {result.pid} with this config file: {CONFIG_FILE}")
 
-    click.echo(f"MariaDB server started with PID: {process.pid} with this config file: {CONFIG_FILE}")
+    else:
+        click.echo(f"Failed to start server!\nError message:\n{result.stderr.read()}")
+        sys.exit(1)
+
 
 
 @cli.command()
