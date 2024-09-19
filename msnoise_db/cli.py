@@ -94,7 +94,8 @@ def install_db():
 
     click.echo("Installing MariaDB database...")
     data_dir = os.path.abspath(os.path.join(mariadb_dir, 'data'))
-    subprocess.run([install_cmd, "-d", data_dir])
+    os.makedirs(data_dir)
+    subprocess.run([install_cmd, "--defaults-file="+CONFIG_FILE])
 
     click.echo(f"Installation complete.")
 
@@ -159,7 +160,7 @@ def create_database(database_name, port):
     # Create database
     create_db_command = f'CREATE DATABASE {database_name};'
 
-    click.echo("Creating database 'msnoise'...")
+    click.echo(f"Creating database '{database_name}'...")
     result = subprocess.run([mysql_cmd, '-u', 'root', f'--port={port}', '--ssl=FALSE', '-e', create_db_command],
                             capture_output=True, text=True)
     if result.returncode == 0:
