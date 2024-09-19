@@ -60,9 +60,11 @@ def download_and_extract(extract_to):
 
     tmpdir = os.path.join(mariadb_dir, "tmp")
     datadir = os.path.join(mariadb_dir, "data")
+    logdir =  os.path.join(mariadb_dir, "log")
     socket = os.path.join(mariadb_dir, "socket.sock")
-    os.makedirs(datadir)
-    os.makedirs(tmpdir)
+    os.makedirs(datadir, exist_ok=True)
+    os.makedirs(tmpdir, exist_ok=True)
+    os.makedirs(logdir, exist_ok=True)
     # Create a custom config file for the specified port
     with open(CONFIG_FILE, 'w') as f:
         f.write("[mysqld]\n")
