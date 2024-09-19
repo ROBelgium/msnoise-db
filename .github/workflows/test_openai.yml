@@ -1,26 +1,24 @@
-name: Setup MariaDB
+name: Setup MariaDB on macOS without Admin
 
 on: [push]
 
 jobs:
   mariadb-setup:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install wget
-        run: sudo apt-get update && sudo apt-get install -y wget
-
       - name: Download MariaDB Portable Edition
         run: |
-          wget https://downloads.mariadb.com/MariaDB/mariadb-10.6.5/winx64-packages/mariadb-10.6.5-winx64.zip -O mariadb.zip
-          unzip mariadb.zip -d mariadb
+          wget https://downloads.mariadb.com/MariaDB/mariadb-10.6.5/binary-packages/mariadb-10.6.5-macos10.15-x86_64.tar.gz -O mariadb.tar.gz
+          tar -xzvf mariadb.tar.gz -C $GITHUB_WORKSPACE
+          mv $GITHUB_WORKSPACE/mariadb-10.6.5-macos10.15-x86_64 $GITHUB_WORKSPACE/mariadb
 
       - name: Setup MariaDB environment variables
         run: |
-          echo 'export MARIADB_HOME=$GITHUB_WORKSPACE/mariadb/mariadb-10.6.5-linux-x86_64/' >> $GITHUB_ENV
+          echo 'export MARIADB_HOME=$GITHUB_WORKSPACE/mariadb' >> $GITHUB_ENV
           echo 'export PATH=$MARIADB_HOME/bin:$PATH' >> $GITHUB_ENV
           source $GITHUB_ENV
 
