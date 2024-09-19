@@ -118,11 +118,11 @@ def start_server():
     data_dir = os.path.join(mariadb_dir, 'data')
     if system == "Windows":
         mysqld_cmd = os.path.join(bin_dir, 'mariadbd')
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE], stdout=subprocess.PIPE,
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file', CONFIG_FILE], stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
     else:
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file=' + CONFIG_FILE], stdout=subprocess.PIPE,
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file', CONFIG_FILE], stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
 
     print(process.stderr.read())
@@ -135,14 +135,15 @@ def start_server():
 @cli.command()
 def stop_server():
     """Stop the MariaDB server."""
-    if not os.path.exists(PID_FILE):
-        click.echo("MariaDB server PID file not found.")
-        return
+
     mariadb_dir = get_mariadb_dir()
     system = platform.system()
     bin_dir = os.path.join(mariadb_dir, 'bin')
 
     if system == 'Windows':
+        if not os.path.exists(PID_FILE):
+            click.echo("MariaDB server PID file not found.")
+            return
         with open(PID_FILE, 'r') as f:
             pid = int(f.read())
 
@@ -159,7 +160,7 @@ def stop_server():
     else:
         try:
             mysqld_cmd = os.path.join(bin_dir, "mariadb-admin")
-            process = subprocess.Popen([mysqld_cmd, "--port 3307", "-u", "root", "shutdown"], stdout=subprocess.PIPE,
+            process = subprocess.Popen([mysqld_cmd, "--port", "3307", "-u", "root", "shutdown"], stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
             print(process.stderr.read())
         except:
