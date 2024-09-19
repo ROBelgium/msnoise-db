@@ -93,8 +93,8 @@ def install_db():
         install_cmd = os.path.join(script_dir, 'mariadb-install-db')
 
     click.echo("Installing MariaDB database...")
-    # data_dir = os.path.realpath(os.path.join(mariadb_dir, 'data'))
-    subprocess.run([install_cmd])
+    data_dir = os.path.abspath(os.path.join(mariadb_dir, 'data'))
+    subprocess.run([install_cmd, "-d", data_dir])
 
     click.echo(f"Installation complete.")
 
