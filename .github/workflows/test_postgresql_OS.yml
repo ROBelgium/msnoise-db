@@ -24,9 +24,10 @@ jobs:
       - name: Build PostgreSQL from source on Ubuntu
         if: matrix.os == 'ubuntu-latest'
         run: |
-          tar -xzf postgresql.tar.gz -C .
-          cd ./postgresql-14.1
-          ./configure --prefix=./postgresql
+          WORKSPACE_ABS_PATH=$(realpath "$GITHUB_WORKSPACE")
+          tar -xzf postgresql.tar.gz -C $WORKSPACE_ABS_PATH
+          cd $WORKSPACE_ABS_PATH/postgresql-14.1
+          ./configure --prefix=$WORKSPACE_ABS_PATH/postgresql
           make
           make install
 
@@ -51,7 +52,7 @@ jobs:
 
       - name: Initialize PostgreSQL data directory
         run: |
-          ./postgresql/bin/initdb -D ./postgresql_data
+          ./postgresql/bin/initdb -D $./postgresql_data
         shell: bash
 
       - name: Start PostgreSQL server
@@ -71,13 +72,20 @@ jobs:
         shell: bash
 
       - name: Set up PostgreSQL user and database
+        if: matrix.os == 'macos-latest'
         run: |
           ./postgresql/bin/createdb -U runner "runner"
           ./postgresql/bin/psql -U runner -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
           ./postgresql/bin/psql -U runner -c "ALTER USER msnoise WITH SUPERUSER;"
         shell: bash
 
-
+      - name: Set up PostgreSQL user and database
+        if: matrix.os == 'windows-latest'
+        run: |
+          ./postgresql/bin/createdb -U runneradmin "runneradmin"
+          ./postgresql/bin/psql -U runneradmin -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
+          ./postgresql/bin/psql -U runneradmin -c "ALTER USER msnoise WITH SUPERUSER;"
+        shell: bash
 
 
       - name: Verify PostgreSQL setup
