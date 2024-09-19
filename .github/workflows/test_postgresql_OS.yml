@@ -1,0 +1,71 @@
+name: Setup PostgreSQL on Multiple OS
+
+on: [push]
+
+jobs:
+  postgresql-setup:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download and unpack PostgreSQL Portable Edition
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            wget https://get.enterprisedb.com/postgresql/postgresql-14.1-1-osx-binaries.zip -O postgresql.zip
+          elif [[ "$RUNNER_OS" == "Linux" ]]; then
+            wget https://get.enterprisedb.com/postgresql/postgresql-14.1-1-linux-x64-binaries.tar.gz -O postgresql.tar.gz
+            tar -xzf postgresql.tar.gz -C $GITHUB_WORKSPACE
+            mv $GITHUB_WORKSPACE/pgsql $GITHUB_WORKSPACE/postgresql
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            Invoke-WebRequest -Uri https://get.enterprisedb.com/postgresql/postgresql-14.1-1-windows-x64-binaries.zip -OutFile postgresql.zip
+          fi
+          
+          if [[ "$RUNNER_OS" == "macOS" || "$RUNNER_OS" == "Windows" ]]; then
+            unzip postgresql.zip -d $GITHUB_WORKSPACE
+            mv $GITHUB_WORKSPACE/pgsql $GITHUB_WORKSPACE/postgresql
+          fi
+
+      - name: Setup PostgreSQL environment variables
+        run: |
+          echo 'POSTGRESQL_HOME=$GITHUB_WORKSPACE/postgresql' >> $GITHUB_ENV
+          echo 'PATH=$POSTGRESQL_HOME/bin:$PATH' >> $GITHUB_ENV
+          source $GITHUB_ENV
+        shell: bash
+
+      - name: Initialize PostgreSQL data directory
+        run: |
+          $GITHUB_WORKSPACE/postgresql/bin/initdb -D $GITHUB_WORKSPACE/postgresql_data
+        shell: bash
+
+      - name: Start PostgreSQL server
+        run: |
+          $GITHUB_WORKSPACE/postgresql/bin/pg_ctl -D $GITHUB_WORKSPACE/postgresql_data -l logfile start
+        shell: bash
+
+      - name: Wait for PostgreSQL to start
+        run: |
+          for i in {30..0}; do
+            if $GITHUB_WORKSPACE/postgresql/bin/pg_isready &>/dev/null; then
+              break
+            fi
+            echo 'Waiting for PostgreSQL to start...'
+            sleep 1
+          done
+        shell: bash
+
+      - name: Set up PostgreSQL user and database
+        run: |
+          $GITHUB_WORKSPACE/postgresql/bin/createdb "runner"
+          $GITHUB_WORKSPACE/postgresql/bin/psql -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
+          $GITHUB_WORKSPACE/postgresql/bin/psql -c "ALTER USER msnoise WITH SUPERUSER;"
+        shell: bash
+
+      - name: Verify PostgreSQL setup
+        run: |
+          $GITHUB_WORKSPACE/postgresql/bin/psql -c "\l"
+        shell: bash
