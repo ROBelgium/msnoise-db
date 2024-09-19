@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-
+      fail-fast: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
