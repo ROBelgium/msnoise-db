@@ -104,10 +104,8 @@ def start_server():
     """Start the MariaDB server in the background."""
     mariadb_dir = get_mariadb_dir()
     system = platform.system()
-    if system == 'Windows':
-        bin_dir = os.path.join(mariadb_dir, 'bin')
-    else:
-        bin_dir = os.path.join(mariadb_dir, 'scripts')
+
+    bin_dir = os.path.join(mariadb_dir, 'bin')
 
     mysqld_cmd = os.path.join(bin_dir, 'mysqld')
     click.echo("Starting MariaDB server in the background...")
