@@ -55,6 +55,8 @@ def download_and_extract(extract_to):
         raise click.BadParameter("Unsupported file format. Only .zip and .tar.gz are supported.")
     mariadb_dir = os.path.abspath(glob.glob(os.path.join(extract_to, "mariadb-11.5.2-*"))[0])
     click.echo(f"Extracted to: {mariadb_dir}")
+    with open(MARIADB_PATH, 'w') as f:
+        f.write(mariadb_dir)
     os.environ["MARIADB_DIR"] = mariadb_dir
 
     tmpdir = os.path.join(mariadb_dir, "tmp")
