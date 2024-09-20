@@ -109,24 +109,27 @@ def install_db():
     click.echo(f"Installation complete.")
 
 
-def is_mariadbd_running():
+def is_mariadbd_active():
     current_os = platform.system()
 
     if current_os == "Linux" or current_os == "Darwin":  # Darwin is macOS
         try:
-            # Run pgrep command to check if mariadbd process is running
-            subprocess.run(["pgrep", "mariadbd"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # Run systemctl is-active command to check if mariadb service is active
+            subprocess.run(["systemctl", "is-active", "--quiet", "mariadb"], check=True, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL)
             return True
         except subprocess.CalledProcessError:
             return False
 
     elif current_os == "Windows":
         try:
-            # Run tasklist command to check if mariadbd process is running
-            output = subprocess.check_output("tasklist", shell=True).decode()
-            return "mariadbd.exe" in output
+            # Run sc query command to check if the mariadb service is running
+            result = subprocess.run("sc query mariadb | find \"RUNNING\"", shell=True, check=True,
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            return "RUNNING" in result.stdout
         except subprocess.CalledProcessError:
             return False
+
     else:
         raise NotImplementedError(f"Current OS ({current_os}) is not supported.")
 
@@ -155,7 +158,7 @@ def start_server():
     print(open(f"{logdir}/err.log","r").read())
 
     # Loop until MariaDB service is active
-    while not is_mariadbd_running():
+    while not is_mariadbd_active():
         print("Waiting for mariadb service to start...")
         time.sleep(2)  # Sleep for 2 seconds before checking again
 
