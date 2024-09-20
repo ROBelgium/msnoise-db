@@ -25,10 +25,17 @@ def get_mariadb_dir():
     return os.path.abspath(mariadb_dir)
 
 
-@click.group()
+class OrderedGroup(click.Group):
+    def list_commands(self, ctx):
+        return self.commands.keys()
+
+@click.group(context_settings=dict(max_content_width=120), cls=OrderedGroup)
 def cli():
     pass
 
+# @cli.group()
+# def mariadb():
+#     pass
 
 @cli.command()
 @click.argument('extract_to', type=click.Path())

@@ -20,7 +20,7 @@ PostgreSQL: [![Github Action Status](https://github.com/ROBelgium/msnoise-db/act
 
 ## Prerequisites
 
-- Python 3.7 or above.
+- Python 3.10 or above.
 - `click` package: Install using `pip install click`.
 - `requests` package: Install using `pip install requests`.
 - `psutil` package: Install using `pip install psutil`.
