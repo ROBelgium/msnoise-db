@@ -71,8 +71,8 @@ jobs:
           done
         shell: bash
 
-      - name: Set up PostgreSQL user and database on MacOS
-        if: matrix.os == 'macos-latest'
+      - name: Set up PostgreSQL user and database on MacOS or Linux
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
         run: |
           ./postgresql/bin/createdb -U runner "runner"
           ./postgresql/bin/psql -U runner -c "CREATE USER msnoise WITH PASSWORD 'msnoise';"
@@ -87,8 +87,8 @@ jobs:
           ./postgresql/bin/psql -U runneradmin -c "ALTER USER msnoise WITH SUPERUSER;"
         shell: bash
 
-      - name: Verify PostgreSQL setup on MacOS
-        if: matrix.os == 'macos-latest'
+      - name: Verify PostgreSQL setup on MacOS or Linux
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
         run: |
           ./postgresql/bin/psql -U runner -c "\l"
         shell: bash
