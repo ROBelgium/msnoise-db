@@ -17,7 +17,7 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 
 ## Prerequisites
 
-- Python 3.6 or above.
+- Python 3.7 or above.
 - `click` package: Install using `pip install click`.
 - `requests` package: Install using `pip install requests`.
 - `psutil` package: Install using `pip install psutil`.
