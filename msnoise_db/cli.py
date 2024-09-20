@@ -57,7 +57,6 @@ def download_and_extract(extract_to):
     click.echo(f"Extracted to: {mariadb_dir}")
     with open(MARIADB_PATH, 'w') as f:
         f.write(mariadb_dir)
-    os.environ["MARIADB_DIR"] = mariadb_dir
 
     tmpdir = os.path.join(mariadb_dir, "tmp")
     datadir = os.path.join(mariadb_dir, "data")
