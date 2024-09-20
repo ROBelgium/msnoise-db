@@ -155,7 +155,7 @@ def start_server():
         print(process.stderr.read())
         sys.exit(0)
     logdir =  os.path.join(mariadb_dir, "log")
-    print(open(os.path.join(logdir, "/err.log"),"r").read())
+    print(open(os.path.join(logdir, "err.log"), "r").read())
 
     # Loop until MariaDB service is active
     while not is_mariadbd_active():
