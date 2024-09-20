@@ -6,6 +6,7 @@ import platform
 import glob
 import psutil
 import pooch
+import time
 
 PID_FILE = 'mariadb_server.pid'
 MARIADB_PATH = ".mariadb_path"
@@ -108,6 +109,27 @@ def install_db():
     click.echo(f"Installation complete.")
 
 
+def is_mariadbd_running():
+    current_os = platform.system()
+
+    if current_os == "Linux" or current_os == "Darwin":  # Darwin is macOS
+        try:
+            # Run pgrep command to check if mariadbd process is running
+            subprocess.run(["pgrep", "mariadbd"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+    elif current_os == "Windows":
+        try:
+            # Run tasklist command to check if mariadbd process is running
+            output = subprocess.check_output("tasklist", shell=True).decode()
+            return "mariadbd.exe" in output
+        except subprocess.CalledProcessError:
+            return False
+    else:
+        raise NotImplementedError(f"Current OS ({current_os}) is not supported.")
+
 @cli.command()
 def start_server():
     """Start the MariaDB server in the background."""
@@ -122,18 +144,25 @@ def start_server():
                                    stderr=subprocess.PIPE)
     else:
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
-        # process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.PIPE,
-        #                            stderr=subprocess.PIPE, preexec_fn=os.setpgrp)
-        os.system(mysqld_cmd + " --defaults-file="+CONFIG_FILE+ "&")
-    # if process.returncode:
-    #     print(process.stdout.read())
-    #     print(process.stderr.read())
-    #     sys.exit(0)
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, preexec_fn=os.setpgrp)
+        # os.system(mysqld_cmd + " --defaults-file="+CONFIG_FILE+ "&")
+    if process.returncode:
+        print(process.stdout.read())
+        print(process.stderr.read())
+        sys.exit(0)
     logdir =  os.path.join(mariadb_dir, "log")
     print(open(f"{logdir}/err.log","r").read())
+
+    # Loop until MariaDB service is active
+    while not is_mariadbd_running():
+        print("Waiting for mariadb service to start...")
+        time.sleep(2)  # Sleep for 2 seconds before checking again
+
     with open(PID_FILE, 'w') as f:
         f.write(str(process.pid))
     click.echo(f"MariaDB server started with PID: {process.pid} with this config file: {CONFIG_FILE}")
+
 
 
 @cli.command()
