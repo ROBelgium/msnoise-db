@@ -1,4 +1,4 @@
-name: Setup PostgreSQL on macOS without Admin
+name: PostgreSQL on MacOS (no root)
 
 on: [push]
 

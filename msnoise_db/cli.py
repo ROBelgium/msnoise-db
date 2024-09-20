@@ -148,13 +148,6 @@ def start_server():
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
         process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, preexec_fn=os.setpgrp)
-        # os.system(mysqld_cmd + " --defaults-file="+CONFIG_FILE+ "&")
-    if process.returncode:
-        print(process.stdout.read())
-        print(process.stderr.read())
-        sys.exit(0)
-    logdir =  os.path.join(mariadb_dir, "log")
-    print(open(os.path.join(logdir, "err.log"), "r").read())
 
     # Loop until MariaDB service is active
     # while not is_mariadbd_active():
