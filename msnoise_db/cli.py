@@ -122,13 +122,14 @@ def start_server():
                                    stderr=subprocess.PIPE)
     else:
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL, preexec_fn=os.setpgrp)
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, preexec_fn=os.setpgrp)
     if process.returncode:
         print(process.stdout.read())
         print(process.stderr.read())
         sys.exit(0)
-
+    logdir =  os.path.join(mariadb_dir, "log")
+    print(open(f"{logdir}/err.log",r).read())
     with open(PID_FILE, 'w') as f:
         f.write(str(process.pid))
     click.echo(f"MariaDB server started with PID: {process.pid} with this config file: {CONFIG_FILE}")
