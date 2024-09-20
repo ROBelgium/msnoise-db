@@ -147,8 +147,8 @@ def start_server():
                                    stderr=subprocess.PIPE)
     else:
         mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, preexec_fn=os.setpgrp)
+        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL, preexec_fn=os.setpgrp)
         # os.system(mysqld_cmd + " --defaults-file="+CONFIG_FILE+ "&")
     if process.returncode:
         print(process.stdout.read())
