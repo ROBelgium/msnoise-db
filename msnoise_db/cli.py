@@ -129,7 +129,7 @@ def start_server():
         print(process.stderr.read())
         sys.exit(0)
     logdir =  os.path.join(mariadb_dir, "log")
-    print(open(f"{logdir}/err.log",r).read())
+    print(open(f"{logdir}/err.log","r").read())
     with open(PID_FILE, 'w') as f:
         f.write(str(process.pid))
     click.echo(f"MariaDB server started with PID: {process.pid} with this config file: {CONFIG_FILE}")
