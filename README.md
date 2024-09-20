@@ -17,7 +17,7 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 
 ## Prerequisites
 
-- Python 3.6 or above.
+- Python 3.7 or above.
 - `click` package: Install using `pip install click`.
 - `requests` package: Install using `pip install requests`.
 - `psutil` package: Install using `pip install psutil`.
@@ -53,7 +53,7 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 Download and extract MariaDB portable version from a given URL.
 
 ```sh
-msnoisedb download_and_extract C:/path/to/extract/to
+msnoisedb download-and-extract C:/path/to/extract/to
 ```
 
 ### 2. Install MariaDB
@@ -61,7 +61,7 @@ msnoisedb download_and_extract C:/path/to/extract/to
 Install MariaDB by specifying the port (default is 3307).
 
 ```sh
-msnoisedb install_db
+msnoisedb install-db
 ```
 
 ### 3. Start MariaDB Server
@@ -69,7 +69,7 @@ msnoisedb install_db
 Start the MariaDB server in the background.
 
 ```sh
-msnoisedb start_server
+msnoisedb start-server
 ```
 
 ### 4. Stop MariaDB Server
@@ -77,7 +77,7 @@ msnoisedb start_server
 Stop the running MariaDB server.
 
 ```sh
-msnoisedb stop_server
+msnoisedb stop-server
 ```
 
 ### 5. Create a New Database
@@ -85,7 +85,7 @@ msnoisedb stop_server
 Create a new database.
 
 ```sh
-msnoisedb create_database DATABASE_NAME
+msnoisedb create-database DATABASE_NAME
 ```
 
 ### 6. Drop an Existing Database
@@ -93,7 +93,7 @@ msnoisedb create_database DATABASE_NAME
 Drop an existing database.
 
 ```sh
-msnoisedb drop_database DATABASE_NAME
+msnoisedb drop-database DATABASE_NAME
 ```
 
 ## Environment Variable
