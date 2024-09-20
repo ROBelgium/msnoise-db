@@ -115,7 +115,7 @@ def is_mariadbd_active():
     if current_os == "Linux" or current_os == "Darwin":  # Darwin is macOS
         try:
             # Run systemctl is-active command to check if mariadb service is active
-            subprocess.run(["systemctl", "is-active", "--quiet", "mariadb"], check=True, stdout=subprocess.DEVNULL,
+            subprocess.run(["systemctl", "is-active", "--quiet", "mariadbd"], check=True, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL)
             return True
         except subprocess.CalledProcessError:
@@ -155,7 +155,7 @@ def start_server():
         print(process.stderr.read())
         sys.exit(0)
     logdir =  os.path.join(mariadb_dir, "log")
-    print(open(f"{logdir}/err.log","r").read())
+    print(open(os.path.join(logdir, "/err.log"),"r").read())
 
     # Loop until MariaDB service is active
     while not is_mariadbd_active():
