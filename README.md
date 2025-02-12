@@ -2,7 +2,7 @@
 
 This is a Python-based command-line interface (CLI) tool for managing a portable postgresql server for MSNoise.
 
-The tool allows you to download, extract, install, start, stop, create, and drop databases using MariaDB.
+The tool allows you to install, start, stop, create, and drop databases.
 
 [![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_linux.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions)
 
@@ -80,6 +80,38 @@ Drop an existing database.
 ```sh
 msnoisedb list-db
 ```
+
+## Configuring an MSNoise project
+
+Create a new project database
+
+```sh
+msnoisedb create-db test_database
+```
+
+Initialise the db in msnoise:
+
+```sh
+msnoise db init
+```
+
+```sh
+Launching the init
+Welcome to MSNoise
+
+What database technology do you want to use?
+ [1] sqlite
+ [2] mysql
+ [3] postgresql
+Choice: 3
+Server: [localhost]: localhost:5099
+Database: [msnoise]: test_database
+Username: [msnoise]: msnoise
+Password (not shown as you type): msnoise
+Table prefix: []:
+Installation Done! - Go to Configuration Step!
+```
+
 
 ## Notes
 
