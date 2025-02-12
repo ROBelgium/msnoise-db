@@ -21,9 +21,7 @@ setup(version=get_git_version(),
       include_package_data=True,
       install_requires=[
           'click',
-          'pymysql',
-          'pooch',
-          'psutil'
+          'postgresql'
       ],
       extras_require={ },
       entry_points='''
