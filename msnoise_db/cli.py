@@ -39,7 +39,6 @@ class PostgresManager:
     def create_msnoise_user(self):
         """Create msnoise user with password if it doesn't exist."""
         try:
-            # Create a temporary script to create user
             create_user_sql = """
             DO
             $do$
@@ -52,22 +51,40 @@ class PostgresManager:
             ALTER USER msnoise CREATEDB;
             """
 
-            # Use psql to execute the SQL
-            process = subprocess.Popen(
-                ['psql', '-p', str(self.port), '-h', self.host, 'postgres'],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+            # Use subprocess.run instead of Popen for simpler handling
+            result = subprocess.run(
+                ['psql',
+                 '-p', str(self.port),
+                 '-h', self.host,
+                 '-d', 'postgres',
+                 '-U', 'postgres',  # Connect as postgres user initially
+                 '-c', create_user_sql
+                 ],
+                capture_output=True,
+                text=True,
+                env={
+                    **os.environ,
+                    'PGPASSWORD': 'postgres'  # Default superuser password on CI
+                }
             )
-            process.communicate(input=create_user_sql.encode())
 
-            if process.returncode == 0:
+            if result.returncode == 0:
                 click.echo("MSNoise user created/verified successfully")
             else:
                 click.echo("Failed to create MSNoise user", err=True)
+                if result.stderr:
+                    click.echo(result.stderr, err=True)
+                if result.stdout:
+                    click.echo(result.stdout)
+                sys.exit(1)
 
         except subprocess.CalledProcessError as e:
             click.echo(f"Failed to create MSNoise user: {e}", err=True)
+            if e.stderr:
+                click.echo(e.stderr, err=True)
+            sys.exit(1)
+        except Exception as e:
+            click.echo(f"Unexpected error creating MSNoise user: {e}", err=True)
             sys.exit(1)
 
     def start_server(self):
