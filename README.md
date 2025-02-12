@@ -26,7 +26,7 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 1. Install the code
 
     ```sh
-    pip install pip@git+https://github.com/ROBelgium/msnoise-db
+    pip install git+https://github.com/ROBelgium/msnoise-db
 
     ```
 
