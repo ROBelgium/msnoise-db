@@ -1,4 +1,4 @@
-name: MariaDB on Linux
+name: Test install - all OS
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
-        os: [ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
         include:
           - os: ubuntu-latest
             label: linux-64
