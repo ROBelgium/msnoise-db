@@ -41,7 +41,7 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 
 ## Usage
 
-### 1. Start a PostgreSQL Server (and set up if not existing)
+### Start a PostgreSQL Server (and set up if not existing)
 
 Start the PostgreSQL server in the background.
 
@@ -49,7 +49,7 @@ Start the PostgreSQL server in the background.
 msnoisedb start
 ```
 
-### 4. Stop PostgreSQL Server
+### Stop PostgreSQL Server
 
 Stop the running PostgreSQL server.
 
@@ -57,7 +57,7 @@ Stop the running PostgreSQL server.
 msnoisedb stop
 ```
 
-### 5. Create a New Database
+### Create a New Database
 
 Create a new database.
 
@@ -65,12 +65,20 @@ Create a new database.
 msnoisedb create-db DATABASE_NAME
 ```
 
-### 6. Drop an Existing Database
+### Drop an Existing Database
 
 Drop an existing database.
 
 ```sh
 msnoisedb drop-db DATABASE_NAME
+```
+
+### List databases
+
+Drop an existing database.
+
+```sh
+msnoisedb list-db
 ```
 
 ## Notes
