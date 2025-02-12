@@ -5,6 +5,6 @@ channels:
 dependencies:
   - click
   - pymysql
-  - pooch
-  - psutil
+  - postgresql
+
 
