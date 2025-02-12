@@ -20,10 +20,7 @@ setup(version=get_git_version(),
       packages=find_packages(),
       include_package_data=True,
       install_requires=[
-          'click',
-          'pymysql',
-          'pooch',
-          'psutil'
+          'click'
       ],
       extras_require={ },
       entry_points='''

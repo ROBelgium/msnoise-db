@@ -1,285 +1,274 @@
-import os
-import sys
-import subprocess
+#!/usr/bin/env python3
 import click
-import platform
-import glob
-import psutil
-import pooch
+import os
+import subprocess
+import sys
 import time
-
-PID_FILE = 'mariadb_server.pid'
-MARIADB_PATH = ".mariadb_path"
-CONFIG_FILE = 'my_custom.cnf'  # Configuration file for non-default port
-MARIADB_DIR_ENV_VAR = 'MARIADB_DIR'  # Name of the environment variable
+from pathlib import Path
 
 
-def get_mariadb_dir():
-    mariadb_dir = os.getenv(MARIADB_DIR_ENV_VAR)
-    if not mariadb_dir:
+class PostgresManager:
+    def __init__(self, data_dir=None, port=5099, host='localhost'):
+        self.data_dir = data_dir and Path(data_dir) or Path.cwd() / 'postgres_data'
+        self.port = port
+        self.host = host
+        self.data_dir.parent.mkdir(parents=True, exist_ok=True)
+
+    def init_db(self):
+        """Initialize PostgreSQL data directory if it doesn't exist."""
+        if not (self.data_dir / 'PG_VERSION').exists():
+            click.echo(f"Initializing PostgreSQL data directory at {self.data_dir}")
+            subprocess.run(['initdb', '-D', str(self.data_dir)], check=True)
+
+            # Modify pg_hba.conf to allow password authentication
+            hba_path = self.data_dir / 'pg_hba.conf'
+            with open(hba_path, 'a') as f:
+                f.write("\n# MSNoise user authentication\n")
+                f.write("host    all             msnoise         127.0.0.1/32            md5\n")
+                f.write("host    all             msnoise         ::1/128                 md5\n")
+                f.write("host    all             msnoise         localhost               md5\n")
+            # Configure postgresql.conf for high number of connections
+            conf_path = self.data_dir / 'postgresql.conf'
+            click.echo("Configuring postgresql.conf for 1000 connections")
+            with open(conf_path, 'a') as f:
+                f.write("\n# MSNoise custom settings\n")
+                f.write("max_connections = 1000\n")
+                f.write("shared_buffers = 256MB\n")  # Increased for many connections
+                f.write("listen_addresses = '*'\n")  # Listen on all interfaces
+
+    def create_msnoise_user(self):
+        """Create msnoise user with password if it doesn't exist."""
         try:
-            mariadb_dir = open(MARIADB_PATH, 'r').read()
-        except:
-            raise click.UsageError(f"Environment variable {MARIADB_DIR_ENV_VAR} is not set."
-                                   f"And no .mariadb_path was found.")
-    return os.path.abspath(mariadb_dir)
+            # Create a temporary script to create user
+            create_user_sql = """
+            DO
+            $do$
+            BEGIN
+               IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'msnoise') THEN
+                  CREATE USER msnoise WITH PASSWORD 'msnoise';
+               END IF;
+            END
+            $do$;
+            ALTER USER msnoise CREATEDB;
+            """
 
+            # Use psql to execute the SQL
+            process = subprocess.Popen(
+                ['psql', '-p', str(self.port), '-h', self.host, 'postgres'],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            process.communicate(input=create_user_sql.encode())
 
-class OrderedGroup(click.Group):
-    def list_commands(self, ctx):
-        return self.commands.keys()
+            if process.returncode == 0:
+                click.echo("MSNoise user created/verified successfully")
+            else:
+                click.echo("Failed to create MSNoise user", err=True)
 
-@click.group(context_settings=dict(max_content_width=120), cls=OrderedGroup)
-def cli():
-    pass
+        except subprocess.CalledProcessError as e:
+            click.echo(f"Failed to create MSNoise user: {e}", err=True)
+            sys.exit(1)
 
-# @cli.group()
-# def mariadb():
-#     pass
+    def start_server(self):
+        """Start PostgreSQL server."""
+        if self.is_server_running():
+            click.echo(f"PostgreSQL server is already running on port {self.port}")
+            return
 
-@cli.command()
-@click.argument('extract_to', type=click.Path())
-def download_and_extract(extract_to):
-    """Download and extract MariaDB portable version."""
-    system = platform.system()
-    if system == 'Windows':
-        url = "https://archive.mariadb.org/mariadb-11.5.2/winx64-packages/mariadb-11.5.2-winx64.zip"
-        hash = "e800794421dfb82699af24b47ecf9efe4add7439b5e5eec33bffa569615c3f3f"
-    else:
-        url = "https://archive.mariadb.org/mariadb-11.5.2/bintar-linux-systemd-x86_64/mariadb-11.5.2-linux-systemd-x86_64.tar.gz"
-        hash = "6fffce126dda54ecaaa3659e03caa47bf5ff6828936001176f84b6bed9637f5c"
-    zip_file = pooch.retrieve(
-        # URL to one of Pooch's test files
-        url=url,
-        known_hash=hash,
-    )
+        self.init_db()
 
-    click.echo("Unzipping the file...")
-    if zip_file.endswith(".zip"):
-        subprocess.run(["unzip", zip_file, "-d", extract_to])
-    elif zip_file.endswith((".tar.gz", ".tgz")):
-        subprocess.run(["tar", "-xzf", zip_file, "-C", extract_to])
-    else:
-        raise click.BadParameter("Unsupported file format. Only .zip and .tar.gz are supported.")
-    mariadb_dir = os.path.abspath(glob.glob(os.path.join(extract_to, "mariadb-11.5.2-*"))[0])
-    click.echo(f"Extracted to: {mariadb_dir}")
-    with open(MARIADB_PATH, 'w') as f:
-        f.write(mariadb_dir)
+        cmd = [
+            'pg_ctl', 'start',
+            '-D', str(self.data_dir),
+            '-o', f'-p {self.port} -h {self.host}',
+            '-l', str(self.data_dir / 'postgres.log')
+        ]
 
-    tmpdir = os.path.join(mariadb_dir, "tmp")
-    datadir = os.path.join(mariadb_dir, "data")
-    logdir =  os.path.join(mariadb_dir, "log")
-    socket = os.path.join(mariadb_dir, "socket.sock")
-    os.makedirs(datadir, exist_ok=True)
-    os.makedirs(tmpdir, exist_ok=True)
-    os.makedirs(logdir, exist_ok=True)
-    # Create a custom config file for the specified port
-    with open(CONFIG_FILE, 'w') as f:
-        f.write("[mysqld]\n")
-        f.write(f"port=3307\n")
-        f.write("skip-grant-tables\n")
-        f.write("max_connections=100\n")  # Allow up to 100 connections
-        f.write("max_allowed_packet=64M\n")  # Allow large queries up to 64MB
-        f.write("bind-address=0.0.0.0\n")
-        system = platform.system()
-
-        if system != 'Windows':
-            f.write(f"basedir='{mariadb_dir}'\n")
-            f.write(f"tmpdir='{tmpdir}'\n")
-            f.write(f"datadir='{datadir}'\n")
-            f.write(f"socket='{socket}'\n")
-            f.write(f"log_error='{logdir}/err.log'\n")
-        f.write("\n\n")
-        f.write("[mysql]\n")
-        f.write(f"port=3307\n")
-        if system != 'Windows':
-            f.write(f"socket='{socket}'\n")
-
-
-@cli.command()
-def install_db():
-    """Install the MariaDB database."""
-    mariadb_dir = get_mariadb_dir()
-
-    system = platform.system()
-    if system == 'Windows':
-        bin_dir = os.path.join(mariadb_dir, 'bin')
-        install_cmd = os.path.join(bin_dir, 'mariadb-install-db.exe')
-    else:
-        script_dir = os.path.join(mariadb_dir, 'scripts')
-        install_cmd = os.path.join(script_dir, 'mariadb-install-db')
-
-    click.echo("Installing MariaDB database...")
-    data_dir = os.path.abspath(os.path.join(mariadb_dir, 'data'))
-    subprocess.run([install_cmd, "--defaults-file="+CONFIG_FILE])
-
-    click.echo(f"Installation complete.")
-
-
-def is_mariadbd_active():
-    current_os = platform.system()
-
-    if current_os == "Linux" or current_os == "Darwin":  # Darwin is macOS
         try:
-            # Run systemctl is-active command to check if mariadb service is active
-            subprocess.run(["systemctl", "is-active", "mariadbd"], check=True)
+            subprocess.run(cmd, check=True)
+            time.sleep(2)  # Wait for server to start
+            click.echo(f"PostgreSQL server started on {self.host}:{self.port}")
+
+            # Create msnoise user after server starts
+            self.create_msnoise_user()
+
+        except subprocess.CalledProcessError as e:
+            click.echo(f"Failed to start PostgreSQL server: {e}", err=True)
+            sys.exit(1)
+
+    def stop_server(self):
+        """Stop PostgreSQL server."""
+        if not self.is_server_running():
+            click.echo("PostgreSQL server is not running")
+            return
+
+        cmd = ['pg_ctl', 'stop', '-D', str(self.data_dir)]
+        try:
+            subprocess.run(cmd, check=True)
+            click.echo("PostgreSQL server stopped")
+        except subprocess.CalledProcessError as e:
+            click.echo(f"Failed to stop PostgreSQL server: {e}", err=True)
+            sys.exit(1)
+
+    def create_database(self, db_name):
+        """Create a new database."""
+        if not self.is_server_running():
+            click.echo("PostgreSQL server is not running. Please start it first.", err=True)
+            return
+
+        try:
+            # Create database owned by msnoise user
+            subprocess.run([
+                'createdb',
+                '-p', str(self.port),
+                '-h', self.host,
+                '-O', 'msnoise',
+                db_name
+            ], check=True)
+            click.echo(f"Database '{db_name}' created successfully (owned by msnoise)")
+        except subprocess.CalledProcessError as e:
+            click.echo(f"Failed to create database: {e}", err=True)
+            sys.exit(1)
+
+    def drop_database(self, db_name):
+        """Drop an existing database."""
+        if not self.is_server_running():
+            click.echo("PostgreSQL server is not running. Please start it first.", err=True)
+            return
+
+        try:
+            subprocess.run([
+                'dropdb',
+                '-p', str(self.port),
+                '-h', self.host,
+                db_name
+            ], check=True)
+            click.echo(f"Database '{db_name}' dropped successfully")
+        except subprocess.CalledProcessError as e:
+            click.echo(f"Failed to drop database: {e}", err=True)
+            sys.exit(1)
+
+    def list_databases(self):
+        """List all databases."""
+        if not self.is_server_running():
+            click.echo("PostgreSQL server is not running. Please start it first.", err=True)
+            return
+
+        try:
+            result = subprocess.run(
+                ['psql', '-p', str(self.port), '-h', self.host,
+                 '-U', 'msnoise', '-l', ],
+                check=True,
+                capture_output=True,
+                text=True,
+                env={**os.environ, 'PGPASSWORD': 'msnoise'}
+            )
+            click.echo("Available databases:")
+            click.echo(result.stdout)
+        except subprocess.CalledProcessError as e:
+            click.echo(f"Failed to list databases: {e}", err=True)
+            if e.stderr:
+                click.echo(e.stderr, err=True)
+            sys.exit(1)
+
+    def is_server_running(self):
+        """Check if PostgreSQL server is running."""
+        try:
+            subprocess.run(
+                ['pg_ctl', 'status', '-D', str(self.data_dir)],
+                check=True,
+                capture_output=True
+            )
             return True
         except subprocess.CalledProcessError:
             return False
 
-    elif current_os == "Windows":
-        try:
-            # Run sc query command to check if the mariadb service is running
-            result = subprocess.run("sc query mariadb | find \"RUNNING\"", shell=True, check=True,
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            return "RUNNING" in result.stdout
-        except subprocess.CalledProcessError:
-            return False
 
-    else:
-        raise NotImplementedError(f"Current OS ({current_os}) is not supported.")
+# Shared options for all commands
+def common_options(f):
+    f = click.option('--port', default=5099, help='Port number (default: 5099)')(f)
+    f = click.option('--host', default='localhost', help='Listen address (default: localhost)')(f)
+    f = click.option('--data-dir', type=click.Path(), help='Custom data directory path')(f)
+    return f
 
-@cli.command()
-def start_server():
-    """Start the MariaDB server in the background."""
-    click.echo("Starting MariaDB server in the background...")
-    mariadb_dir = get_mariadb_dir()
-    system = platform.system()
-    bin_dir = os.path.join(mariadb_dir, 'bin')
-    data_dir = os.path.join(mariadb_dir, 'data')
-    if system == "Windows":
-        mysqld_cmd = os.path.join(bin_dir, 'mariadbd')
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-    else:
-        mysqld_cmd = os.path.join(bin_dir, "mariadbd-safe")
-        process = subprocess.Popen([mysqld_cmd, '--defaults-file='+ CONFIG_FILE], stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL, preexec_fn=os.setpgrp)
 
-    # Loop until MariaDB service is active
-    # while not is_mariadbd_active():
-    print("Waiting 20s for mariadb service to start...")
-    time.sleep(20)  # Sleep for 2 seconds before checking again
+@click.group()
+def cli():
+    """PostgreSQL Server Management CLI for MSNoise
 
-    with open(PID_FILE, 'w') as f:
-        f.write(str(process.pid))
-    click.echo(f"MariaDB server started with PID: {process.pid} with this config file: {CONFIG_FILE}")
-
+    This CLI tool manages a PostgreSQL server instance configured for MSNoise,
+    with automatic user creation (msnoise:msnoise) and appropriate permissions.
+    """
+    pass
 
 
 @cli.command()
-def stop_server():
-    """Stop the MariaDB server."""
-
-    mariadb_dir = get_mariadb_dir()
-    system = platform.system()
-    bin_dir = os.path.join(mariadb_dir, 'bin')
-
-    if system == 'Windows':
-        if not os.path.exists(PID_FILE):
-            click.echo("MariaDB server PID file not found.")
-            return
-        with open(PID_FILE, 'r') as f:
-            pid = int(f.read())
-
-        try:
-            p = psutil.Process(pid)
-            p.terminate()
-            p.wait(timeout=5)
-            click.echo("MariaDB server stopped.")
-        except (psutil.NoSuchProcess, psutil.TimeoutExpired) as e:
-            click.echo(f"Error stopping MariaDB server: {str(e)}")
-        finally:
-            if os.path.exists(PID_FILE):
-                os.remove(PID_FILE)
-    else:
-        try:
-            mysqld_cmd = os.path.join(bin_dir, "mariadb-admin")
-            process = subprocess.Popen([mysqld_cmd, "--port", "3307", "-u", "root", "shutdown"], stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-            print(process.stderr.read())
-        except:
-            click.echo("Sorry")
-        finally:
-            if os.path.exists(PID_FILE):
-                os.remove(PID_FILE)
-
-@cli.command()
-@click.argument('database_name')
-@click.option('--port', default=os.environ.get("MARIADB_PORT", 3307), help="Port used by the MariaDB server.")
-def create_database(database_name, port):
-    """Create a new database in MariaDB."""
-    mariadb_dir = get_mariadb_dir()
-    system = platform.system()
-    bin_dir = os.path.join(mariadb_dir, 'bin')
-    mysql_cmd = os.path.join(bin_dir, 'mariadb')
-
-    # Test connection
-    click.echo("Testing connection...")
-    subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
-
-    # Create database
-    create_db_command = f'CREATE DATABASE {database_name};'
-
-    click.echo(f"Creating database '{database_name}'...")
-    result = subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', create_db_command],
-                            capture_output=True, text=True)
-    if result.returncode == 0:
-        click.echo(f"Database '{database_name}' has been created.")
-    else:
-        click.echo(f"Failed to drop database '{database_name}'!\nError message:\n{result.stderr}")
-        sys.exit(1)
-
-    # List databases
-    click.echo("Listing databases...")
-    subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
-
-    click.echo("Database setup completed.")
+@common_options
+def start(port, host, data_dir):
+    """Start PostgreSQL server with MSNoise user configuration"""
+    pg_manager = PostgresManager(
+        data_dir=data_dir and Path(data_dir),
+        port=port,
+        host=host
+    )
+    pg_manager.start_server()
 
 
 @cli.command()
-@click.argument('database_name')
-@click.option('--port', default=os.environ.get("MARIADB_PORT", 3307), help="Port used by the MariaDB server.")
-def drop_database(database_name, port):
-    """Drop a database in MariaDB."""
-    mariadb_dir = get_mariadb_dir()
-    system = platform.system()
-    bin_dir = os.path.join(mariadb_dir, 'bin')
-
-    mysql_cmd = os.path.join(bin_dir, 'mariadb')
-    if database_name in ["information_schema", "mysql", "performance_schema", "sys"]:
-        click.echo("You can't drop that database!")
-        sys.exit(1)
-
-    # Drop database
-    drop_db_command = f'DROP DATABASE {database_name};'
-
-    click.echo(f"Dropping database '{database_name}'...")
-    result = subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', drop_db_command],
-                            capture_output=True, text=True)
-    if result.returncode == 0:
-        click.echo(f"Database '{database_name}' has been dropped.")
-    else:
-        click.echo(f"Failed to drop database '{database_name}'!\nError message:\n{result.stderr}")
+@common_options
+def stop(port, host, data_dir):
+    """Stop PostgreSQL server"""
+    pg_manager = PostgresManager(
+        data_dir=data_dir and Path(data_dir),
+        port=port,
+        host=host
+    )
+    pg_manager.stop_server()
 
 
 @cli.command()
-@click.option('--port', default=os.environ.get("MARIADB_PORT", 3307), help="Port used by the MariaDB server.")
-def show_databases(port):
-    """Create a new database in MariaDB."""
-    mariadb_dir = get_mariadb_dir()
-    system = platform.system()
-    bin_dir = os.path.join(mariadb_dir, 'bin')
+@click.argument('db_name')
+@common_options
+def create_db(db_name, port, host, data_dir):
+    """Create a new database owned by msnoise user"""
+    pg_manager = PostgresManager(
+        data_dir=data_dir and Path(data_dir),
+        port=port,
+        host=host
+    )
+    pg_manager.create_database(db_name)
 
-    mysql_cmd = os.path.join(bin_dir, 'mariadb')
 
-    # List databases
-    click.echo("Listing databases...")
-    subprocess.run([mysql_cmd, '-u', 'runner', f'--port={port}', '--ssl=FALSE', '-e', 'SHOW DATABASES;'])
+@cli.command()
+@common_options
+def list_db(port, host, data_dir):
+    """List all databases"""
+    pg_manager = PostgresManager(
+        data_dir=data_dir and Path(data_dir),
+        port=port,
+        host=host
+    )
+    pg_manager.list_databases()
+
+
+@cli.command()
+@click.argument('db_name')
+@common_options
+def drop_db(db_name, port, host, data_dir):
+    """Drop an existing database"""
+    pg_manager = PostgresManager(
+        data_dir=data_dir and Path(data_dir),
+        port=port,
+        host=host
+    )
+    pg_manager.drop_database(db_name)
+
+
 
 def run():
     cli(obj={})
 
 
 if __name__ == '__main__':
-    cli()
+    run()

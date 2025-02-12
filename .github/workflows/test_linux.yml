@@ -1,4 +1,4 @@
-name: MariaDB on Linux
+name: Test install - all OS
 
 on:
   push:
@@ -14,8 +14,8 @@ jobs:
       !contains(github.event.head_commit.message, '+NOFULLTEST')
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
-        os: [ubuntu-latest]
+        python-version: ['3.11', '3.12']
+        os: [macos-latest, ubuntu-latest, windows-latest]
         include:
           - os: ubuntu-latest
             label: linux-64
@@ -27,10 +27,6 @@ jobs:
       - name: Get current date
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
-      - name: Install dependencies on Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update && sudo apt-get install -y libncurses-dev libncursesw-dev libncursesw libncurses
 
       - uses: conda-incubator/setup-miniconda@v3.1.0
         with:
@@ -64,10 +60,8 @@ jobs:
       - name: Test suite
         shell: bash -l {0}
         run: |
-          msnoisedb download-and-extract ./
-          ls
-          msnoisedb install-db
-          msnoisedb start-server
-          msnoisedb create-database bubu
-          msnoisedb show-databases
-          msnoisedb stop-server
+          msnoisedb start
+          msnoisedb create-db bubu
+          msnoisedb list-db
+          msnoisedb drop-db bubu
+          msnoisedb stop

@@ -1,31 +1,25 @@
 # MSNoise-DB CLI Tool
 
-This is a Python-based command-line interface (CLI) tool for managing a portable MariaDB server for MSNoise.
+This is a Python-based command-line interface (CLI) tool for managing a portable postgresql server for MSNoise.
+
 The tool allows you to download, extract, install, start, stop, create, and drop databases using MariaDB.
 
-MariaDB: [![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_linux.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions) [![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_windows.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions)
-
-PostgreSQL: [![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_macos.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions) [![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_postgresql_OS.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions)
+[![Github Action Status](https://github.com/ROBelgium/msnoise-db/actions/workflows/test_linux.yml/badge.svg)](https://github.com/ROBelgium/msnoise-db/actions)
 
 
 ## Features
 
-- Download and extract MariaDB portable version.
-- Install/Setup MariaDB.
-- Start MariaDB server in the background.
-- Stop MariaDB server.
+- Setup PostgreSQL.
+- Start PostgreSQL server in the background (custom port by default 15432, configurable)
+- Stop PostgreSQL server.
 - Create a new database.
 - Drop an existing database.
-- Supports custom configurations for port, maximum connections, and large queries.
 
 ## Prerequisites
 
-- Python 3.10 or above.
-- `click` package: Install using `pip install click`.
-- `requests` package: Install using `pip install requests`.
-- `psutil` package: Install using `pip install psutil`.
-- `configobj` package: Install using `pip install configobj`.
-- `pooch` package: Install using `pip install pooch`.
+- Python 3.11 or above.
+- `click` package: Install using `conda install -c conda-forge click`.
+- `postgresql` package: Install using `conda install -c conda-forge postgresql`.
 
 ## Installation
 
@@ -51,36 +45,20 @@ PostgreSQL: [![Github Action Status](https://github.com/ROBelgium/msnoise-db/act
 
 ## Usage
 
-### 1. Download and Extract MariaDB
+### 1. Start a PostgreSQL Server (and set up if not existing)
 
-Download and extract MariaDB portable version from a given URL.
+Start the PostgreSQL server in the background.
 
 ```sh
-msnoisedb download-and-extract C:/path/to/extract/to
+msnoisedb start
 ```
 
-### 2. Install MariaDB
+### 4. Stop PostgreSQL Server
 
-Install MariaDB by specifying the port (default is 3307).
-
-```sh
-msnoisedb install-db
-```
-
-### 3. Start MariaDB Server
-
-Start the MariaDB server in the background.
+Stop the running PostgreSQL server.
 
 ```sh
-msnoisedb start-server
-```
-
-### 4. Stop MariaDB Server
-
-Stop the running MariaDB server.
-
-```sh
-msnoisedb stop-server
+msnoisedb stop
 ```
 
 ### 5. Create a New Database
@@ -88,7 +66,7 @@ msnoisedb stop-server
 Create a new database.
 
 ```sh
-msnoisedb create-database DATABASE_NAME
+msnoisedb create-db DATABASE_NAME
 ```
 
 ### 6. Drop an Existing Database
@@ -96,54 +74,12 @@ msnoisedb create-database DATABASE_NAME
 Drop an existing database.
 
 ```sh
-msnoisedb drop-database DATABASE_NAME
-```
-
-## Environment Variable
-
-You should set the `MARIADB_DIR` environment variable to the path where MariaDB is extracted.
-This avoids passing the directory path as an argument to each command.
-
-Similarly, if you plan to use another port than the default (3307), you can set the `MARIADB_PORT` environment variable.
-
-### On Windows:
-
-```cmd
-set MARIADB_DIR=C:\path\to\extracted\mariadb
-set MARIADB_PORT=9307
-```
-
-### On Linux/macOS:
-
-```sh
-export MARIADB_DIR=/path/to/extracted/mariadb
-export MARIADB_PORT=9307
-```
-
-## Configuration
-
-The tool makes use of a custom configuration file named `my_custom.cnf` to manage the MariaDB server settings.
-The configuration file includes settings such as:
-
-- Port number
-- `skip-grant-tables` to allow any user to connect without a password.
-- `max_connections` to allow more than the default 10 connections.
-- `max_allowed_packet` to allow large query sizes.
-
-## Example Configuration (`my_custom.cnf`)
-
-```ini
-[mysqld]
-port=3307
-skip-grant-tables
-max_connections=100
-max_allowed_packet=64M
+msnoisedb drop-db DATABASE_NAME
 ```
 
 ## Notes
 
-- **Security Warning**: The `skip-grant-tables` option is included for development and debugging purposes, allowing any user to connect without authentication. This should not be used in a production environment.
-- **Supported Platforms**: The tool is designed to work on both Windows and Linux platforms.
+- **Supported Platforms**: The tool is designed to work on Windows, Linux and MacOS platforms.
 
 ## License
 
@@ -152,7 +88,3 @@ This project is licensed under the EUPL License. See the [LICENSE](LICENSE.TXT) 
 ## Acknowledgements
 
 - [Click](https://palletsprojects.com/p/click/) for creating powerful command-line interfaces.
-- [Requests](https://docs.python-requests.org/en/latest/) for handling HTTP requests.
-- [Psutil](https://psutil.readthedocs.io/en/latest/) for process management.
-- [ConfigObj](https://configobj.readthedocs.io/en/latest/) for reading and writing configuration files.
-- [Pooch](https://www.fatiando.org/pooch/latest/) for downloading the portable zip/tarball.
