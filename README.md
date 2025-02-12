@@ -27,10 +27,16 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 
     ```sh
     pip install git+https://github.com/ROBelgium/msnoise-db
-
     ```
 
-2. Create a new folder to store the database data
+    if your console doesn't have git, you can access the zip directly:
+
+    ```sh
+    pip install https://github.com/ROBelgium/msnoise-db/archive.master.zip
+    ```
+   
+
+3. Create a new folder to store the database data
 
 
 ## Usage
