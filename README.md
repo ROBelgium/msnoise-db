@@ -23,24 +23,14 @@ The tool allows you to download, extract, install, start, stop, create, and drop
 
 ## Installation
 
-1. Clone the repository:
+1. Install the code
 
     ```sh
-    git clone https://github.com/ROBelgium/msnoise-db.git
-    cd msnoise-db
+    pip install pip@git+https://github.com/ROBelgium/msnoise-db
+
     ```
 
-2. Install the required Python packages:
-
-    ```sh
-    pip install click requests psutil configobj pooch
-    ```
-
-4. Install this package:
-
-    ```sh
-    pip install -e .
-    ```
+2. Create a new folder to store the database data
 
 
 ## Usage
