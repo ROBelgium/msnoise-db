@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 class PostgresManager:
-    def __init__(self, data_dir=None, port=15432, host='localhost'):
+    def __init__(self, data_dir=None, port=5099, host='localhost'):
         self.data_dir = data_dir and Path(data_dir) or Path.cwd() / 'postgres_data'
         self.port = port
         self.host = host
@@ -187,7 +187,7 @@ class PostgresManager:
 
 # Shared options for all commands
 def common_options(f):
-    f = click.option('--port', default=15432, help='Port number (default: 15432)')(f)
+    f = click.option('--port', default=5099, help='Port number (default: 5099)')(f)
     f = click.option('--host', default='localhost', help='Listen address (default: localhost)')(f)
     f = click.option('--data-dir', type=click.Path(), help='Custom data directory path')(f)
     return f
