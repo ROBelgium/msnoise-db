@@ -10,7 +10,7 @@ The tool allows you to install, start, stop, create, and drop databases.
 ## Features
 
 - Setup PostgreSQL.
-- Start PostgreSQL server in the background (custom port by default 8099, configurable)
+- Start PostgreSQL server in the background (custom port by default 5099, configurable)
 - Stop PostgreSQL server.
 - Create a new database.
 - Drop an existing database.
