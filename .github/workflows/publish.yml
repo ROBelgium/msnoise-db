@@ -1,19 +1,20 @@
 name: Publish to PyPI
 
-# Trigger on a published GitHub Release (which creates a git tag).
-# The same workflow publishes to TestPyPI first, then to PyPI — gated by
-# the environment protection rules you configure in repo Settings.
+# Triggered on every published GitHub Release.
 #
-# Prerequisites (do this once in the GitHub repo settings):
-#   1. PyPI  → Publishing → Add a pending publisher
-#        Repository : ROBelgium/msnoise-db
-#        Workflow   : publish.yml
-#        Environment: pypi
-#   2. TestPyPI → same, environment: testpypi
-#   3. In repo Settings → Environments, create "testpypi" and "pypi".
-#      Add a required reviewer to "pypi" if you want a manual approval gate.
+# Routing logic:
+#   - ALL releases  → TestPyPI  (alphas, betas, RCs, final)
+#   - Stable only   → PyPI      (tags matching vN.N.N exactly, e.g. v1.2.3)
 #
-# No API tokens or secrets are required — OIDC trusted publishing handles auth.
+# "Stable" is defined by the regex  ^v[0-9]+\.[0-9]+\.[0-9]+$
+# Pre-releases (v1.0.0a1, v1.0.0rc2, v1.0.0.post1, …) go to TestPyPI only.
+#
+# No API tokens required — OIDC trusted publishing handles authentication.
+#
+# One-time setup (already done):
+#   PyPI    → Trusted Publisher: ROBelgium/msnoise-db, publish.yml, env=pypi
+#   TestPyPI→ Trusted Publisher: ROBelgium/msnoise-db, publish.yml, env=testpypi
+#   GitHub  → Settings → Environments → "pypi" + "testpypi" created
 
 on:
   release:
@@ -28,11 +29,14 @@ jobs:
     name: Build distribution packages
     runs-on: ubuntu-latest
 
+    outputs:
+      is_stable: ${{ steps.check_tag.outputs.is_stable }}
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0        # full history so git describe works for _version.py
+          fetch-depth: 0        # setuptools-scm needs full history for version
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -40,14 +44,26 @@ jobs:
           python-version: '3.12'
 
       - name: Install build tooling
-        run: python -m pip install --upgrade pip build
+        run: python -m pip install --upgrade pip build twine
+
+      - name: Check whether this is a stable release tag (vN.N.N)
+        id: check_tag
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          echo "Tag: $TAG"
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_stable=true" >> "$GITHUB_OUTPUT"
+            echo "→ stable release, will publish to PyPI"
+          else
+            echo "is_stable=false" >> "$GITHUB_OUTPUT"
+            echo "→ pre-release tag, TestPyPI only"
+          fi
 
       - name: Build sdist and wheel
         run: python -m build
 
       - name: Check dist contents
         run: |
-          pip install twine
           twine check dist/*
           ls -lh dist/
 
@@ -58,17 +74,17 @@ jobs:
           path: dist/
           if-no-files-found: error
 
-  # ── 2. Publish to TestPyPI ────────────────────────────────────────────────
+  # ── 2. Publish to TestPyPI (every release) ───────────────────────────────
   publish-testpypi:
     name: Publish to TestPyPI
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/msnoise-db
+      url: https://test.pypi.org/p/msnoisedb
 
     permissions:
-      id-token: write   # required for OIDC trusted publishing
+      id-token: write
 
     steps:
       - name: Download dist artifact
@@ -83,17 +99,18 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           print-hash: true
 
-  # ── 3. Publish to PyPI ────────────────────────────────────────────────────
+  # ── 3. Publish to PyPI (stable releases only: vN.N.N) ────────────────────
   publish-pypi:
     name: Publish to PyPI
-    needs: publish-testpypi
+    needs: [build, publish-testpypi]
+    if: needs.build.outputs.is_stable == 'true'
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/msnoise-db
+      url: https://pypi.org/p/msnoisedb
 
     permissions:
-      id-token: write   # required for OIDC trusted publishing
+      id-token: write
 
     steps:
       - name: Download dist artifact
