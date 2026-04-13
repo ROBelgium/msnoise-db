@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "msnoise-db"
+dynamic = ["version"]
+description = "The database minion for MSNoise — a self-contained, user-run PostgreSQL server"
+readme = "README.md"
+license = { text = "EUPL-1.1" }
+authors = [
+    { name = "Thomas Lecocq & MSNoise dev team", email = "Thomas.Lecocq@seismology.be" }
+]
+requires-python = ">=3.10"
+keywords = [
+    "noise", "monitoring", "seismic", "velocity", "change",
+    "dvv", "dtt", "cross-correlation", "seismology", "postgresql", "database"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "click",
+]
+
+[project.urls]
+Homepage = "http://www.msnoise.org"
+Repository = "https://github.com/ROBelgium/msnoise-db"
+"Bug Tracker" = "https://github.com/ROBelgium/msnoise-db/issues"
+
+[project.scripts]
+msnoisedb = "msnoise_db.cli:run"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["msnoise_db*"]
+
+[tool.setuptools_scm]
+# Writes the version into msnoise_db/_version.py at build time.
+# The installed package reads it from there via importlib.metadata.
+write_to = "msnoise_db/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"   # keeps TestPyPI uploads clean (no +local suffix)
