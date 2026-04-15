@@ -22,6 +22,7 @@ class PostgresManager:
                 [
                     'initdb',
                     '-D', str(self.data_dir),
+                    '-U', 'postgres',  # explicitly create superuser "postgres"
                     '-A', 'trust',  # default auth for local is trust
                 ],
                 check=True,
