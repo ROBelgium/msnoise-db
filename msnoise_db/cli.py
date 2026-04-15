@@ -87,7 +87,7 @@ class PostgresManager:
 
         try:
             subprocess.run(cmd, check=True)
-            time.sleep(2)  # Wait for server to start
+            time.sleep(5)  # Wait for server to start
             click.echo(f"PostgreSQL server started on {self.host}:{self.port}")
 
             # Create msnoise user after server starts
