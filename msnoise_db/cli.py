@@ -78,16 +78,6 @@ class PostgresManager:
 
         self.init_db()
 
-        # After initdb, overwrite pg_hba.conf to use trust on localhost
-        hba_path = self.data_dir / "pg_hba.conf"
-        hba_lines = [
-            "# TYPE  DATABASE  USER  ADDRESS       METHOD",
-            f"local   all       all                 trust",
-            f"host    all       all   127.0.0.1/32  trust",
-            f"host    all       all   ::1/128       trust",
-        ]
-        hba_path.write_text("\n".join(hba_lines) + "\n")
-
         cmd = [
             'pg_ctl', 'start',
             '-D', str(self.data_dir),
