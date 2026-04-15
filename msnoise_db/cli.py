@@ -18,23 +18,39 @@ class PostgresManager:
         """Initialize PostgreSQL data directory if it doesn't exist."""
         if not (self.data_dir / 'PG_VERSION').exists():
             click.echo(f"Initializing PostgreSQL data directory at {self.data_dir}")
-            subprocess.run(['initdb', '-D', str(self.data_dir)], check=True)
+            subprocess.run(
+                [
+                    'initdb',
+                    '-D', str(self.data_dir),
+                    '-U', 'postgres',  # explicitly create superuser "postgres"
+                    '-A', 'trust',  # default auth for local is trust
+                ],
+                check=True,
+            )
 
-            # Modify pg_hba.conf to allow password authentication
-            hba_path = self.data_dir / 'pg_hba.conf'
-            with open(hba_path, 'a') as f:
-                f.write("\n# MSNoise user authentication\n")
-                f.write("host    all             msnoise         127.0.0.1/32            md5\n")
-                f.write("host    all             msnoise         ::1/128                 md5\n")
-                f.write("host    all             msnoise         localhost               md5\n")
-            # Configure postgresql.conf for high number of connections
-            conf_path = self.data_dir / 'postgresql.conf'
+            # Completely overwrite pg_hba.conf (not append) to avoid GSSAPI
+            hba_path = self.data_dir / "pg_hba.conf"
+            hba_lines = [
+                "# TYPE  DATABASE  USER  ADDRESS       METHOD",
+                "local   all       all                 trust",
+                "host    all       all   127.0.0.1/32  trust",
+                "host    all       all   ::1/128       trust",
+                "",
+                "# MSNoise user authentication",
+                "host    all       msnoise   127.0.0.1/32  md5",
+                "host    all       msnoise   ::1/128       md5",
+                "host    all       msnoise   localhost     md5",
+            ]
+            hba_path.write_text("\n".join(hba_lines) + "\n")
+
+            # Configure postgresql.conf
+            conf_path = self.data_dir / "postgresql.conf"
             click.echo("Configuring postgresql.conf for 1000 connections")
             with open(conf_path, 'a') as f:
                 f.write("\n# MSNoise custom settings\n")
                 f.write("max_connections = 1000\n")
-                f.write("shared_buffers = 256MB\n")  # Increased for many connections
-                f.write("listen_addresses = '*'\n")  # Listen on all interfaces
+                f.write("shared_buffers = 256MB\n")
+                f.write("listen_addresses = '*'\n")
 
     def create_msnoise_user(self):
         """Create msnoise user with password if it doesn't exist."""
@@ -77,16 +93,6 @@ class PostgresManager:
             return
 
         self.init_db()
-
-        # After initdb, overwrite pg_hba.conf to use trust on localhost
-        hba_path = self.data_dir / "pg_hba.conf"
-        hba_lines = [
-            "# TYPE  DATABASE  USER  ADDRESS       METHOD",
-            f"local   all       all                 trust",
-            f"host    all       all   127.0.0.1/32  trust",
-            f"host    all       all   ::1/128       trust",
-        ]
-        hba_path.write_text("\n".join(hba_lines) + "\n")
 
         cmd = [
             'pg_ctl', 'start',
